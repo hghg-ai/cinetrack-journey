@@ -11,3 +11,12 @@ biến có thể hiểu là lớp vỏ rỗng,":" để khai báo kiểu dữ  r
 val name: String = "HM"
 Các kiểu dữ liệu cơ bản: Int, String, Boolean, Double
 Ngày 3(T5,20/8): làm các bài thực hành theo tài liệu kotlin
+code mẫu bài 1:
+<iframe src="https://pl.kotl.in/dDob9cVbd"></iframe>
+code kết quả bài 1:
+<iframe src="https://pl.kotl.in/5wmIQEqjr"></iframe>
+
+code mẫu bài 2:
+<iframe src="https://pl.kotl.in/lp-5mam1l"></iframe>
+code kết quả bài 2:
+<iframe src="https://pl.kotl.in/iVWPrskxx"></iframe>
