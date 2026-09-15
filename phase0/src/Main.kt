@@ -1,3 +1,6 @@
+import kotlinx.serialization.json.Json
+import java.io.File
+
 data class Movie(
         val id:Int,
         val title:String,
@@ -39,15 +42,15 @@ fun Movie.prettyPrint() {
                     "biển bất tử do cựu thuyền phó nổi loạn của Jack thuyền trưởng Barbossa cầm đầu. Jack cũng muốn trả " +
                     "thù Barbossa vì đã bỏ lại hắn mắc kẹt trên một hòn đảo trước khi đánh cắp con tàu Ngọc Trai Đen " +
                     "của hắn cùng 882 thỏi vàng Aztec bị nguyền rủa.",8.1,"2003-7-9", listOf(5,2)),
-            Movie(3,"Scary Movie 1","A group of hapless teens harboring a guilty secret is stalked by" +
+            Movie(3,"Scary main.kotlin.Movie 1","A group of hapless teens harboring a guilty secret is stalked by" +
                     " an equally bumbling serial killer in this parody of 1990s horror movies.",6.3,"2000-7-7", listOf(3,4)),
-            Movie(4,"Scary Movie 2","A pair of priests, a group of students and a professor find themselves seduced and " +
+            Movie(4,"Scary main.kotlin.Movie 2","A pair of priests, a group of students and a professor find themselves seduced and " +
                     "spooked by a poltergeist wreaking havoc in a haunted mansion.",5.4, "2001-7-4", listOf(3,4)),
             Movie(5,"White chicks","In order to foil a kidnapping, two Black FBI agents disguise " +
                     "themselves as white women to impersonate the heiresses they've been assigned to protect.",6.0,
                     "2004-6-23", listOf(3)),
             Movie(6, "Transformers: The Last Knight","Quintessa brainwashes Optimus Prime and heads " +
-                    "to Earth to search for an ancient staff. Cade, Bumblebee and the Autobots race against time to " +
+                    "to Earth to main.kotlin.search for an ancient staff. Cade, Bumblebee and the Autobots race against time to " +
                     "find it, while also escaping an anti-Transformers force.",5.2,"2017-6-20", listOf(1,2)),
             Movie(7,"Real Steel ","Charlie, a prize fighter, loses his chance to win the title when humans" +
                     " are replaced by heavy, towering robots in the boxing ring. After failing badly, he teams up with " +
@@ -68,7 +71,7 @@ fun Movie.prettyPrint() {
         Movie(12,"Pirates of the Caribbean: At World's End","Will Turner and Elizabeth Swann team up with Barbossa " +
                 "to rescue Jack Sparrow from the clutches of Davy Jones. The Flying Dutchman's ghost ship is all " +
                 "set to create trouble on the Seven Seas.",7.2,"2007-5-25",listOf(5,2)),
-        Movie(13,"Pirates of the Caribbean: On Stranger Tides","Captain Jack Sparrow sets sail in search of the " +
+        Movie(13,"Pirates of the Caribbean: On Stranger Tides","Captain Jack Sparrow sets sail in main.kotlin.search of the " +
                 "fountain of youth. On his way, he meets a mysterious woman from his past. In order to accomplish his mission, he has " +
                 "to face his old enemy, Blackbeard.",6.6,"2011-5-7",listOf(5,2)),
         Movie(14,"Pirates of the Caribbean: Dead Men Tell No Tales","To break the curse of Flying Dutchman, " +
@@ -129,8 +132,8 @@ fun Movie.prettyPrint() {
             listOf(1,2,5))
 
     )
-fun List<Movie>.filterByGenre(genreIds: Int): List<Movie> {
-    return this.filter{movie->movie.genreIds.contains(genreIds)}
+fun List<Movie>.filterByGenre(genreId: Int): List<Movie> {
+    return this.filter{movie->movie.genreIds.contains(genreId)}
 }
 fun List<Movie>.search(keyword: String): List<Movie> {
     return this.filter{movie -> movie.title.contains(keyword, ignoreCase = true)}
@@ -143,8 +146,9 @@ fun List<Movie>.groupByYear(): Map<String,List<Movie>> {
     return this.groupBy { movie -> movie.releaseDate.substringBefore("-") }
 }
 fun List<Movie>.averageRatingByGenre(genres: List<Genre>): Map<String, Double> {
-    return genres.associate { genre -> val moviesInGenre = this.filterByGenre(genre.id)
-    val avgRating = if( moviesInGenre.isNotEmpty()){
+    return genres.associate { genre ->
+        val moviesInGenre = this.filterByGenre(genre.id)
+        val avgRating = if( moviesInGenre.isNotEmpty()){
         moviesInGenre.map{it.rating}.average()
     }else{
         0.0
@@ -153,18 +157,20 @@ fun List<Movie>.averageRatingByGenre(genres: List<Genre>): Map<String, Double> {
     }
 }
 
-fun main(){
+
+
+fun main() {
     val topMovie = sampleMovies.maxByOrNull { it.rating }
-    topMovie ?.let{
+    topMovie?.let {
         println("PHIM HAY NHẤT:${it.title} | ${it.rating} điểm")
     }
-    val validTopMovie = topMovie ?:run{
+    val validTopMovie = topMovie ?: run {
         println(" Danh sách phim trống")
         return
     }
     println("Danh sách phim\n")
-    for( movie in sampleMovies ){
-        if(movie == validTopMovie){
+    for (movie in sampleMovies) {
+        if (movie == validTopMovie) {
             println(">>>PHIM HAY NHẤT<<<")
         }
         movie.prettyPrint()
@@ -172,7 +178,7 @@ fun main(){
     println("1.Lọc theo genre(Action, ID:2)")
     sampleMovies.filterByGenre(2).forEach { it.prettyPrint() }
 
-println("2.Tìm phim real steel ")
+    println("2.Tìm phim real steel ")
     sampleMovies.search("real steel").forEach { it.prettyPrint() }
 
     println("3.Top 5 phim dựa vào rate")
@@ -180,10 +186,42 @@ println("2.Tìm phim real steel ")
 
     println("4.Nhóm theo năm")
     sampleMovies.groupByYear().forEach { (year, movies) ->
-        println("Năm: $year, ${movies.size} phim") }
+        println("Năm: $year, ${movies.size} phim")
+    }
 
     println("5.Trung bình rate dựa trên genre")
     sampleMovies.averageRatingByGenre(sampleGenre).forEach { (genrename, avg) ->
+        println("$genrename: ${"%.2f".format(avg)}")
+    }
+    val jsonParser = Json { ignoreUnknownKeys = true }
+    val jsonString = File("src/main/resources/movies.json").readText()
+    val response = jsonParser.decodeFromString<MovieResponseDto>(jsonString)
+    val movieDtos: List<MovieDto> = response.results
+    val realMovies: List<Movie> = movieDtos.map { it.toMovie() }
+    println("Đã lấy thành công ${realMovies.size} phim từ movie.json")
+
+    println("1.TOP 5 PHIM BÌNH DỰA VÀO RATE")
+    realMovies.top5ByRating().forEach { movie ->
+        println("- ${movie.title} (${movie.rating}) - Ngày chiếu: ${movie.releaseDate}")
+    }
+    println("2.LỌC THEO GENRE(28)")
+    realMovies.filterByGenre(28).forEach { movie ->
+        println("${movie.title} (${movie.genreIds})")
+    }
+    println("3.TÌM PHIM SPIDER-MAN")
+    realMovies.search("SPIDER").forEach { movie ->
+        println("${movie.title}")
+    }
+    println("4.NHÓM THEO NĂM")
+    realMovies.groupByYear().forEach { (year, movies) ->
+        println("$year: ${movies.size} phim")
+    }
+    println("5.TRUNG BÌNH RATE DỰA TRÊN GENRE")
+    val realGenres = listOf(
+        Genre(28, "action"),
+        Genre(35, "comedy"),
+        Genre(878, "sci-fi"))
+    realMovies.averageRatingByGenre(realGenres).forEach { (genrename, avg) ->
         println("$genrename: ${"%.2f".format(avg)}")
     }
 }
