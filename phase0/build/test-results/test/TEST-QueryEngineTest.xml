@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="QueryEngineTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-09-16T08:04:26.398Z" hostname="HC1-FANSIPAN-1L" time="0.058">
+  <properties/>
+  <testcase name="Top 5 theo Rating trả danh sách đúng thứ tự giảm dần" classname="QueryEngineTest" time="0.029"/>
+  <testcase name="Filter theo Genre không tồn tại trả về danh sách rỗng" classname="QueryEngineTest" time="0.002"/>
+  <testcase name="Search không phân biệt chữ hoa chữ thường" classname="QueryEngineTest" time="0.011"/>
+  <testcase name="Search trả về đúng danh sách khi tìm thấy từ khóa" classname="QueryEngineTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
