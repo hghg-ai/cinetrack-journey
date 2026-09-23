@@ -279,7 +279,7 @@ fun List<Movie>.averageRatingByGenre(genres: List<Genre>): Map<String, Double> {
     }
         genre.name to avgRating
     }
-}
+}// querry engine
 
 
 
@@ -350,6 +350,7 @@ fun main() {
     realMovies.averageRatingByGenre(realGenres).forEach { (genrename, avg) ->
         println("$genrename: ${"%.2f".format(avg)}")
     }
+    //#5.Fake Repository và Coroutines
     runBlocking {
         val repository: MovieRepository = FakeMovieRepository()
 
