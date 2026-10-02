@@ -61,31 +61,30 @@ val showBottomBar = bottomBarRoutes.any{it.route == currentRoute}
             navController = navController,
             startDestination = NavRoute.Home.route,
             modifier = Modifier.padding(innerPadding)
-        ){
+        ){// màn home
             composable(NavRoute.Home.route){
                 HomeScreen(
                     onMovieClick = {movie ->
                         navController.navigate(NavRoute.Detail.createRoute(movie.id))
                     }
                 )
-            }
+            }// màn search
             composable(NavRoute.Search.route){
                 Text(text = "Màn hình search")
-            }
+            }// màn favorite
             composable(NavRoute.Favorites.route){
                 Text(text = "Màn hình favorite")
-            }
+            }// màn detail
             composable(
                 route = NavRoute.Detail.route,
                 arguments = listOf(navArgument("movieID"){type = NavType.IntType})
             ){backStackEntry ->
                 val movieId = backStackEntry.arguments?.getInt("movieId")?: -1
-                Text(text = "Chi tiết phim ID: $movieId")
+               DetailScreen(
+                   movieId = movieId,
+                   onBackClick = {navController.popBackStack()}
+               )
             }
-
         }
     }
-
-
-
 }
