@@ -70,7 +70,11 @@ val showBottomBar = bottomBarRoutes.any{it.route == currentRoute}
                 )
             }// màn search
             composable(NavRoute.Search.route){
-                Text(text = "Màn hình search")
+                SearchScreen(
+                    onMovieClick = {movie ->
+                        navController.navigate(NavRoute.Detail.createRoute(movie.id))
+                    }
+                )
             }// màn favorite
             composable(NavRoute.Favorites.route){
                 Text(text = "Màn hình favorite")
