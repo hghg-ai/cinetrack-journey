@@ -77,7 +77,7 @@ val showBottomBar = bottomBarRoutes.any{it.route == currentRoute}
                 )
             }// màn favorite
             composable(NavRoute.Favorites.route){
-                Text(text = "Màn hình favorite")
+                FavoriteScreen()
             }// màn detail
             composable(
                 route = NavRoute.Detail.route,
