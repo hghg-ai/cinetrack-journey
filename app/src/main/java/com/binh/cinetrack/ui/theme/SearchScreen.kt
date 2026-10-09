@@ -1,12 +1,14 @@
 package com.binh.cinetrack.ui.theme
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -15,6 +17,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -25,29 +29,29 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.binh.cinetrack.domain.Movie
-import com.binh.cinetrack.domain.sampleMovies
-import com.binh.cinetrack.domain.search
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SearchScreen (
-    allMovie: List<Movie> = sampleMovies,
+    viewModel: SearchViewModel = viewModel() ,
     onMovieClick: (Movie)-> Unit = {},
     modifier: Modifier = Modifier
 ){
-    var searchQuery by remember { mutableStateOf("") }
-    val searchResult = remember (searchQuery){
-        if(searchQuery.isBlank()) emptyList()
-        else allMovie.search(searchQuery)
-    }
+    val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    //var searchQuery by rememberSaveable() { mutableStateOf("") }
+    //val searchResult = remember (searchQuery){
+      //  if(searchQuery.isBlank()) emptyList()
+        //else allMovie.search(searchQuery)
+    //}
     Scaffold(
         topBar = {
             TopAppBar(
@@ -63,8 +67,8 @@ fun SearchScreen (
         ){
             OutlinedTextField(
                 value = searchQuery,
-                onValueChange = {searchQuery = it},
-                modifier = modifier.fillMaxWidth(),
+                onValueChange = {viewModel.onQueryChange(it)},
+                modifier = Modifier.fillMaxWidth(),
                 placeholder = {Text("Nhập tên phim")},
                 leadingIcon = {
                     Icon(
@@ -74,7 +78,7 @@ fun SearchScreen (
                 },
                 trailingIcon ={
                     if(searchQuery.isNotEmpty()){
-                        IconButton(onClick = {searchQuery = ""}) {
+                        IconButton(onClick = {viewModel.onQueryChange("")}) {
                             Icon(
                                 imageVector = Icons.Default.Clear,
                                 contentDescription = "Clear Text"
@@ -90,20 +94,53 @@ fun SearchScreen (
                     .padding(top = 16.dp),
                 contentAlignment = Alignment.Center
             ){
-                when{
-                    searchQuery.isBlank()-> {
+                when (val currentState = uiState) {
+                    // trạng thái chờ nhập từ khóa
+                    is SearchUiState.Idle -> {
                         Text(
                             text = "Nhập tên phim ...",
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
-                    else -> {
+                    // trạng thái đang đọc mạng
+                    is SearchUiState.Loading -> {
+                        CircularProgressIndicator()
+                    }
+                    //trạng thái ko tìm thấy kết quả nào
+                    is SearchUiState.Empty -> {
+                        Text(
+                            text = "Không tìm thấy phim nào khớp với từ khóa",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                    // trạng thái lỗi mạng
+                    is SearchUiState.Error -> {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ){
+                            Text(
+                                text = currentState.message,
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.error,
+                                textAlign = TextAlign.Center
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Button(onClick = {viewModel.retrySearch()}) {
+                                Text(text = "Thử lại")
+                            }
+                        }
+                    }
+                    // trạng thái tìm thấy kết quả
+                    is SearchUiState.Success -> {
                         LazyColumn(
                             modifier = Modifier.fillMaxSize()
                         ) {
                             items(
-                                items = searchResult,
+                                items = currentState.movies,
                                 key = {movie -> movie.id }
                             ) {movie ->
                                 SearchResultItem(
@@ -143,7 +180,7 @@ fun SearchResultItem(
             )
             val year = movie.releaseDate.substringBefore("-")
             Text(
-                text="★ ${movie.rating} · $year",
+                text = "★ ${movie.rating} · $year",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

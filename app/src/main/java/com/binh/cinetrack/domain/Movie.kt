@@ -6,7 +6,9 @@ data class Movie(
     val rating: Double,
     val releaseDate: String,
     val genreIds: List<Int>,
-    val popularity: Double
+    val popularity: Double,
+    val posterPath: String = "",
+    val backdropPath: String = ""
 )
 data class Genre(val id:Int, val name:String)
 fun Movie.prettyPrint() {
