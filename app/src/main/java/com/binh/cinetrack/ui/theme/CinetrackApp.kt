@@ -9,6 +9,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
@@ -60,10 +61,12 @@ val showBottomBar = bottomBarRoutes.any{it.route == currentRoute}
         NavHost(
             navController = navController,
             startDestination = NavRoute.Home.route,
-            modifier = Modifier.padding(innerPadding)
+            modifier = Modifier.padding(innerPadding),
+
         ){// màn home
             composable(NavRoute.Home.route){
                 HomeScreen(
+                    viewModel = viewModel(),
                     onMovieClick = {movie ->
                         navController.navigate(NavRoute.Detail.createRoute(movie.id))
                     }
@@ -83,7 +86,7 @@ val showBottomBar = bottomBarRoutes.any{it.route == currentRoute}
                 route = NavRoute.Detail.route,
                 arguments = listOf(navArgument("movieID"){type = NavType.IntType})
             ){backStackEntry ->
-                val movieId = backStackEntry.arguments?.getInt("movieId")?: -1
+                val movieId = backStackEntry.arguments?.getInt("movieID")?: -1
                DetailScreen(
                    movieId = movieId,
                    onBackClick = {navController.popBackStack()}

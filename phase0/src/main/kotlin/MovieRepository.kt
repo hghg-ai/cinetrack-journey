@@ -3,8 +3,11 @@ import kotlinx.serialization.json.Json
 import java.io.File
 
 interface MovieRepository {
-    suspend fun getTrending(): List<Movie>
-    suspend fun search(query: String): List<Movie>
+    suspend fun getMovies(): List<Movie>
+    suspend fun getPopular(page: Int = 1): List<Movie>
+    suspend fun searchMovies(query: String): List<Movie>
+    suspend fun getMovieDetail(id: Int):Movie?
+    suspend fun getGenres(): List<Genre>
 }
 class FakeMovieRepository : MovieRepository {
     private val jsonParser = Json{ignoreUnknownKeys = true}

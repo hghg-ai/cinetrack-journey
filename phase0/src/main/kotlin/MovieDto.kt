@@ -28,4 +28,4 @@ fun MovieDto.toMovie(): Movie {
         genreIds = this.genreIds
     )
 }
-// 4.json parser
+// 4.json parser/mapper
