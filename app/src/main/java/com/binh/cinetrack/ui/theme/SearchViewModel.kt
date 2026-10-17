@@ -3,7 +3,6 @@ package com.binh.cinetrack.ui.theme
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.binh.cinetrack.data.RemoteMovieRepository
 import com.binh.cinetrack.domain.MovieRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
@@ -19,7 +18,7 @@ import java.io.IOException
 
 @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
 class SearchViewModel(
-    private val repository: MovieRepository = RemoteMovieRepository()
+    private val repository: MovieRepository
 ) : ViewModel() {
 
     private val _searchQuery = MutableStateFlow("")

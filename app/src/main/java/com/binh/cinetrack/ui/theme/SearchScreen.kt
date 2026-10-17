@@ -31,58 +31,69 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.binh.cinetrack.CinetrackApplication
+import com.binh.cinetrack.data.RemoteMovieRepository
 import com.binh.cinetrack.domain.Movie
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SearchScreen (
-    viewModel: SearchViewModel = viewModel() ,
-    onMovieClick: (Movie)-> Unit = {},
+fun SearchScreen(
+    onMovieClick: (Movie) -> Unit = {},
     modifier: Modifier = Modifier
-){
+) {
+    val context = LocalContext.current
+    val app = context.applicationContext as CinetrackApplication
+    val viewModel: SearchViewModel = viewModel(
+        factory = object : ViewModelProvider.Factory {
+            @Suppress("UNCHECKED_CAST")
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                return SearchViewModel(RemoteMovieRepository(
+                    app.database.favoriteDao(), movieCacheDao = app.database.movieCacheDao())) as T
+            }
+        }
+    )
+
     val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    //var searchQuery by rememberSaveable() { mutableStateOf("") }
-    //val searchResult = remember (searchQuery){
-      //  if(searchQuery.isBlank()) emptyList()
-        //else allMovie.search(searchQuery)
-    //}
+
     Scaffold(
         topBar = {
             TopAppBar(
-                title = {Text("Tìm kiếm", fontWeight = FontWeight.Bold) }
+                title = { Text("Tìm kiếm", fontWeight = FontWeight.Bold) }
             )
         },
         modifier = modifier.fillMaxSize()
-    ) { innerPadding->
+    ) { innerPadding ->
         Column(
             modifier = modifier.fillMaxSize()
                 .padding(innerPadding)
                 .padding(horizontal = 16.dp)
-        ){
+        ) {
             OutlinedTextField(
                 value = searchQuery,
-                onValueChange = {viewModel.onQueryChange(it)},
+                onValueChange = { viewModel.onQueryChange(it) },
                 modifier = Modifier.fillMaxWidth(),
-                placeholder = {Text("Nhập tên phim")},
+                placeholder = { Text("Nhập tên phim") },
                 leadingIcon = {
                     Icon(
                         imageVector = Icons.Default.Search,
                         contentDescription = "Search Icon"
                     )
                 },
-                trailingIcon ={
-                    if(searchQuery.isNotEmpty()){
-                        IconButton(onClick = {viewModel.onQueryChange("")}) {
+                trailingIcon = {
+                    if (searchQuery.isNotEmpty()) {
+                        IconButton(onClick = { viewModel.onQueryChange("") }) {
                             Icon(
                                 imageVector = Icons.Default.Clear,
                                 contentDescription = "Clear Text"
-
                             )
                         }
                     }
@@ -93,9 +104,8 @@ fun SearchScreen (
                 modifier = Modifier.fillMaxSize()
                     .padding(top = 16.dp),
                 contentAlignment = Alignment.Center
-            ){
+            ) {
                 when (val currentState = uiState) {
-                    // trạng thái chờ nhập từ khóa
                     is SearchUiState.Idle -> {
                         Text(
                             text = "Nhập tên phim ...",
@@ -103,11 +113,9 @@ fun SearchScreen (
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
-                    // trạng thái đang đọc mạng
                     is SearchUiState.Loading -> {
                         CircularProgressIndicator()
                     }
-                    //trạng thái ko tìm thấy kết quả nào
                     is SearchUiState.Empty -> {
                         Text(
                             text = "Không tìm thấy phim nào khớp với từ khóa",
@@ -116,12 +124,11 @@ fun SearchScreen (
                             textAlign = TextAlign.Center
                         )
                     }
-                    // trạng thái lỗi mạng
                     is SearchUiState.Error -> {
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.Center
-                        ){
+                        ) {
                             Text(
                                 text = currentState.message,
                                 style = MaterialTheme.typography.bodyLarge,
@@ -129,23 +136,22 @@ fun SearchScreen (
                                 textAlign = TextAlign.Center
                             )
                             Spacer(modifier = Modifier.height(16.dp))
-                            Button(onClick = {viewModel.retrySearch()}) {
+                            Button(onClick = { viewModel.retrySearch() }) {
                                 Text(text = "Thử lại")
                             }
                         }
                     }
-                    // trạng thái tìm thấy kết quả
                     is SearchUiState.Success -> {
                         LazyColumn(
                             modifier = Modifier.fillMaxSize()
                         ) {
                             items(
                                 items = currentState.movies,
-                                key = {movie -> movie.id }
-                            ) {movie ->
+                                key = { movie -> movie.id }
+                            ) { movie ->
                                 SearchResultItem(
                                     movie = movie,
-                                    onClick = {onMovieClick(movie)}
+                                    onClick = { onMovieClick(movie) }
                                 )
                             }
                         }
@@ -155,24 +161,25 @@ fun SearchScreen (
         }
     }
 }
+
 @Composable
 fun SearchResultItem(
     movie: Movie,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
-){
+) {
     Row(
         modifier = modifier.fillMaxWidth()
-            .clickable{onClick()}
-            .padding(vertical = 12.dp ),
+            .clickable { onClick() }
+            .padding(vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
-    ){
+    ) {
         MoviePoster(
             movie = movie,
             modifier = modifier.size(width = 60.dp, height = 90.dp)
         )
         Spacer(modifier = Modifier.width(16.dp))
-        Column{
+        Column {
             Text(
                 text = movie.title,
                 style = MaterialTheme.typography.titleMedium,

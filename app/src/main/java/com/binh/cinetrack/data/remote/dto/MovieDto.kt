@@ -14,7 +14,7 @@ data class MovieDetailDto(
     val title: String,
     val overview: String = "",
     val popularity: Double = 0.0,
-    @SerialName("poter_path")
+    @SerialName("poster_path")
     val posterPath: String? = null,
     @SerialName("backdrop_path")
     val backdropPath: String? = null,

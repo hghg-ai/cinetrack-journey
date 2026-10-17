@@ -3,6 +3,7 @@ import java.util.Properties
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.ksp)
     id("org.jetbrains.kotlin.plugin.serialization") version "2.4.20"
 }
 
@@ -52,6 +53,7 @@ android {
 
 dependencies {
     implementation(libs.androidx.compose.material.icons.extended)
+    implementation("androidx.datastore:datastore-preferences:1.1.1")
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.material3)
@@ -64,12 +66,16 @@ dependencies {
     val retrofitVersion = "3.0.0"
     val okhttpVersion = "5.5.0"
     val kotlinxSerializationVersion = "1.11.0"
+    val roomVersion = "2.8.5"
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:${kotlinxSerializationVersion}")
     implementation("com.squareup.retrofit2:retrofit:$retrofitVersion")
     implementation("com.squareup.retrofit2:converter-kotlinx-serialization:$retrofitVersion")
     implementation("com.squareup.okhttp3:okhttp:$okhttpVersion")
     implementation("com.squareup.okhttp3:logging-interceptor:$okhttpVersion")
     implementation("io.coil-kt:coil-compose:2.7.0")
+    implementation("androidx.room:room-runtime:$roomVersion")
+    implementation("androidx.room:room-ktx:$roomVersion")
+    ksp("androidx.room:room-compiler:$roomVersion")
     testImplementation(libs.junit)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)

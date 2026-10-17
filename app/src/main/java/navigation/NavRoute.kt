@@ -8,6 +8,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 
 sealed class NavRoute ( val route: String, val title: String?= null,
         val icon: ImageVector? = null){
+    object Settings : NavRoute("settings", "Cài đặt")
     object Home : NavRoute("home","Trang chủ", Icons.Default.Home)
     object Search: NavRoute("search", "Tìm kiếm", Icons.Default.Search)
     object Favorites: NavRoute("favorite","Yêu thích", Icons.Default.Favorite)

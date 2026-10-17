@@ -9,17 +9,14 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
-import androidx.navigation.compose.NavHost
 import androidx.navigation.NavType
+import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import navigation.NavRoute
-
 
 @Composable
 fun CinetrackApp() {
@@ -32,20 +29,20 @@ fun CinetrackApp() {
         NavRoute.Search,
         NavRoute.Favorites
     )
-val showBottomBar = bottomBarRoutes.any{it.route == currentRoute}
+    val showBottomBar = bottomBarRoutes.any { it.route == currentRoute }
 
     Scaffold(
         bottomBar = {
-            if (showBottomBar){
-                NavigationBar{
+            if (showBottomBar) {
+                NavigationBar {
                     bottomBarRoutes.forEach { screen ->
                         NavigationBarItem(
-                            icon = {Icon(screen.icon!!, contentDescription = screen.title)},
-                            label = {Text(screen.title!!)},
+                            icon = { Icon(screen.icon!!, contentDescription = screen.title) },
+                            label = { Text(screen.title!!) },
                             selected = currentRoute == screen.route,
                             onClick = {
-                                navController.navigate(screen.route){
-                                    popUpTo(navController.graph.findStartDestination().id){
+                                navController.navigate(screen.route) {
+                                    popUpTo(navController.graph.findStartDestination().id) {
                                         saveState = true
                                     }
                                     launchSingleTop = true
@@ -57,40 +54,50 @@ val showBottomBar = bottomBarRoutes.any{it.route == currentRoute}
                 }
             }
         }
-    ){innerPadding ->
+    ) { innerPadding ->
         NavHost(
             navController = navController,
             startDestination = NavRoute.Home.route,
             modifier = Modifier.padding(innerPadding),
-
-        ){// màn home
-            composable(NavRoute.Home.route){
+        ) { // màn home
+            composable(NavRoute.Home.route) {
                 HomeScreen(
-                    viewModel = viewModel(),
-                    onMovieClick = {movie ->
+                    onMovieClick = { movie ->
                         navController.navigate(NavRoute.Detail.createRoute(movie.id))
+                    },
+                    onSettingsClick = {
+                        navController.navigate(NavRoute.Settings.route)
                     }
                 )
-            }// màn search
-            composable(NavRoute.Search.route){
+            }// màn setting
+            composable(NavRoute.Settings.route) {
+                SettingsScreen(
+                    onBackClick = {navController.popBackStack()}
+                )
+            } // màn search
+            composable(NavRoute.Search.route) {
                 SearchScreen(
+                    onMovieClick = { movie ->
+                        navController.navigate(NavRoute.Detail.createRoute(movie.id))
+                    }
+                )
+            } // màn favorite
+            composable(NavRoute.Favorites.route) {
+                FavoriteScreen(
                     onMovieClick = {movie ->
                         navController.navigate(NavRoute.Detail.createRoute(movie.id))
                     }
                 )
-            }// màn favorite
-            composable(NavRoute.Favorites.route){
-                FavoriteScreen()
-            }// màn detail
+            } // màn detail
             composable(
                 route = NavRoute.Detail.route,
-                arguments = listOf(navArgument("movieID"){type = NavType.IntType})
-            ){backStackEntry ->
-                val movieId = backStackEntry.arguments?.getInt("movieID")?: -1
-               DetailScreen(
-                   movieId = movieId,
-                   onBackClick = {navController.popBackStack()}
-               )
+                arguments = listOf(navArgument("movieID") { type = NavType.IntType })
+            ) { backStackEntry ->
+                val movieId = backStackEntry.arguments?.getInt("movieID") ?: -1
+                DetailScreen(
+                    movieId = movieId,
+                    onBackClick = { navController.popBackStack() }
+                )
             }
         }
     }
