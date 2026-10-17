@@ -1,0 +1,29 @@
+ ────────────────────────────────────────────────────────────────────────────────────────
+                                 CHIỀU ĐI (GHI DỮ LIỆU)
+ ────────────────────────────────────────────────────────────────────────────────────────
+ [DetailScreen] (Click ♥)
+       │
+       ▼
+ [DetailViewModel] ──(launch coroutine)──► toggleFavorite(movie)
+                                                │
+                                                ▼
+ [RemoteMovieRepository] ──(Movie ➔ FavoriteMovieEntity)──► favoriteDao.insert()
+                                                                 │
+                                                                 ▼
+ [Room Database] ───────────────(Ghi bản ghi mới vào DB)─────────┘
+       │
+       │ ────────────────────────────────────────────────────────────────────────────────
+       │                          CHIỀU VỀ (PHẢN HỒI QUA FLOW)
+       ▼ ────────────────────────────────────────────────────────────────────────────────
+ [Room Database phát tín hiệu thay đổi tới tất cả các Flow đang quan sát bảng favorite_movies]
+       │
+       ├───────────────────────────────────────────┐
+       ▼ (Luồng 1: Trạng thái nút ♥)               ▼ (Luồng 2: Danh sách Yêu thích)
+  [FavoriteDao.isFavorite]                   [FavoriteDao.getAll]
+       │                                           │
+       ▼                                           ▼
+  [DetailViewModel.isFavorite]               [FavoriteViewModel.favorite]
+       │ (StateFlow: false ➔ true)                 │ (StateFlow phát danh sách mới)
+       ▼                                           ▼
+  [DetailScreen Recompose]                   [FavoriteScreen Recompose]
+  ➜ Icon đổi thành Trái tim ĐỎ                 ➜ Hiển thị bộ phim mới vào màn yêu thích

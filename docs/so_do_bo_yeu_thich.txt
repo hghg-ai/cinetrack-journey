@@ -1,0 +1,32 @@
+ ──────────────────────────────────────────────────────────────────────────────────────────
+                             CHIỀU ĐI: THỰC THI LỆNH XÓA (WRITE PATH)
+ ──────────────────────────────────────────────────────────────────────────────────────────
+ [FavoriteScreen] (Người dùng bấm nút ♥ / Bỏ thích ở màn detail phim)
+       │
+       ▼
+ [FavoriteViewModel] ──(launch coroutine)──► repository.toggleFavorite(movie)
+                                                   │
+                                                   ▼
+ [RemoteMovieRepository] ──(Kiểm tra isFav == true)──► favoriteDao.delete(movie.id)
+                                                             │
+                                                             ▼
+ [Room Database] ───────────(Thực thi câu lệnh SQL DELETE)───┘
+       │
+       │  SQL: DELETE FROM favorite_movies WHERE id = :movieId;
+       │  (Dòng dữ liệu của bộ phim chính thức bị xóa khỏi bảng)
+       │
+ ──────────────────────────────────────────────────────────────────────────────────────────
+                       CHIỀU VỀ: PHÁT DỮ LIỆU TỰ ĐỘNG QUA FLOW (READ PATH)
+ ──────────────────────────────────────────────────────────────────────────────────────────
+ [Room Database phát tín hiệu thay đổi tới tất cả các Flow đang quan sát bảng favorite_movies]
+       │
+       ├───────────────────────────────────────────┐
+       ▼ (Luồng 1: Cập nhật Danh sách Yêu thích)    ▼ (Luồng 2: Cập nhật Trạng thái nút ♥)
+  [FavoriteDao.getAll()]                      [FavoriteDao.isFavorite(movieId)]
+       │ (Phát danh sách mới đã xóa phim)          │ (Phát giá trị FALSE)
+       ▼                                           ▼
+  [FavoriteViewModel.favorite]                [DetailViewModel.isFavorite]
+       │ (StateFlow cập nhật danh sách mới)        │ (StateFlow nhận giá trị false)
+       ▼                                           ▼
+  [FavoriteScreen Recompose]                  [DetailScreen Recompose]
+  ➜ phim biến mất khỏi danh sách!     ➜ Icon trái tim đổi từ ĐỎ ➔ VIỀN XÁM!
