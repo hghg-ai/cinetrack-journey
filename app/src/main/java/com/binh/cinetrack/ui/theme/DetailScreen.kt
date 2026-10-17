@@ -1,6 +1,5 @@
 package com.binh.cinetrack.ui.theme
 
-
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -33,39 +32,53 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
-import coil.compose.AsyncImage
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
+import com.binh.cinetrack.CinetrackApplication
+import com.binh.cinetrack.data.RemoteMovieRepository
+import com.binh.cinetrack.data.local.MovieCacheDao
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun DetailScreen(
     movieId: Int,
     onBackClick: () -> Unit = {},
-    viewModel: DetailViewModel = viewModel(),
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
+    val app = context.applicationContext as CinetrackApplication
+    val viewModel: DetailViewModel = viewModel(
+        factory = object : ViewModelProvider.Factory {
+            @Suppress("UNCHECKED_CAST")
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                return DetailViewModel(
+                    RemoteMovieRepository(
+                        app.database.favoriteDao(), movieCacheDao = app.database.movieCacheDao())
+                ) as T
+            }
+        }
+    )
+
     LaunchedEffect(movieId) {
         viewModel.loadMovieDetail(movieId)
     }
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    //val movie = remember(movieId){ sampleMovies.find { it.id == movieId } }
-    var isFavorite by remember { mutableStateOf(false) }
+    val isFav by viewModel.isFavorite.collectAsStateWithLifecycle()
 
     Box(modifier = modifier.fillMaxSize()) {
         when (val currentState = state) {
-            // trạng thái loadig
             is DetailUiState.Loading -> {
                 Box(
                     modifier = Modifier.fillMaxSize(),
@@ -74,7 +87,6 @@ fun DetailScreen(
                     CircularProgressIndicator()
                 }
             }
-            // trạng thái error
             is DetailUiState.Error -> {
                 Scaffold(
                     topBar = {
@@ -112,13 +124,10 @@ fun DetailScreen(
                     }
                 }
             }
-            // trạng thái success
-
             is DetailUiState.Success -> {
                 val movie = currentState.movie
                 val genres = currentState.genres
 
-                // Hiển thị thông tin chi tiết khi tìm thấy phim
                 Scaffold(
                     topBar = {
                         TopAppBar(
@@ -132,13 +141,13 @@ fun DetailScreen(
                                 }
                             },
                             actions = {
-                                IconButton(onClick = { isFavorite = !isFavorite }) {
+                                IconButton(onClick = { viewModel.toggleFavorite(movie) }) {
                                     Icon(
-                                        imageVector = if (isFavorite) Icons.Default.Favorite
+                                        imageVector = if (isFav) Icons.Default.Favorite
                                         else Icons.Default.FavoriteBorder,
                                         contentDescription = "Thêm vào yêu thích",
-                                        tint = if (isFavorite) Color.Red
-                                        else MaterialTheme.colorScheme.surface
+                                        tint = if (isFav) Color.Red
+                                        else MaterialTheme.colorScheme.onSurface
                                     )
                                 }
                             },
@@ -146,7 +155,6 @@ fun DetailScreen(
                                 containerColor = MaterialTheme.colorScheme.surface,
                                 titleContentColor = MaterialTheme.colorScheme.onSurface,
                                 navigationIconContentColor = MaterialTheme.colorScheme.onSurface
-
                             )
                         )
                     },
@@ -165,20 +173,17 @@ fun DetailScreen(
                                 .fillMaxWidth()
                                 .aspectRatio(16f / 9f),
                             contentScale = ContentScale.Crop,
-                            error = painterResource(id = com.binh.cinetrack
-                                .R.drawable.ic_launcher_background)
+                            error = painterResource(id = com.binh.cinetrack.R.drawable.ic_launcher_background)
                         )
                         Column(
                             modifier = Modifier.padding(16.dp)
                         ) {
-                            // tên phim cỡ headlineMedium
                             Text(
                                 text = movie.title,
                                 style = MaterialTheme.typography.headlineMedium,
                                 fontWeight = FontWeight.Bold
                             )
                             Spacer(modifier = Modifier.height(8.dp))
-                            // hàng thông tin điểm vs năm
                             Row(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
@@ -195,7 +200,6 @@ fun DetailScreen(
                                 )
                             }
                             Spacer(modifier = Modifier.height(16.dp))
-                            // Dải chip thể loại bằng flowrow
                             FlowRow(
                                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                                 verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -210,7 +214,6 @@ fun DetailScreen(
                                 }
                             }
                             Spacer(modifier = Modifier.height(16.dp))
-                            // Đoạn overview đày đủ
                             Text(
                                 text = "Nội dung phim",
                                 style = MaterialTheme.typography.titleLarge,
@@ -229,4 +232,3 @@ fun DetailScreen(
         }
     }
 }
-
