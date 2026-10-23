@@ -27,6 +27,7 @@ import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -37,18 +38,11 @@ import com.binh.cinetrack.data.preferences.ThemePreferences
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen (
+    viewModel: SettingViewModel = hiltViewModel(),
     onBackClick: () -> Unit ={},
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    val viewModel: SettingViewModel = viewModel(
-        factory = object : ViewModelProvider.Factory{
-            @Suppress("UNCHECKED_CAST")
-            override fun <T : ViewModel> create(modelClass: Class<T>): T{
-                return SettingViewModel(ThemePreferences(context)) as T
-            }
-        }
-    )
     val currentTheme by viewModel.currentTheme.collectAsStateWithLifecycle()
 
     Scaffold(

@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.binh.cinetrack.data.RemoteMovieRepository
 import com.binh.cinetrack.domain.Movie
 import com.binh.cinetrack.domain.MovieRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -15,8 +16,10 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.io.IOException
+import javax.inject.Inject
 
-class DetailViewModel(
+@HiltViewModel
+class DetailViewModel @Inject constructor(
     private val repository: MovieRepository
 ) : ViewModel() {
     private val _movieId = MutableStateFlow<Int?>(null)

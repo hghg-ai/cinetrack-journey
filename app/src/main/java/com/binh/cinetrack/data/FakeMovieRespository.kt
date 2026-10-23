@@ -1,5 +1,6 @@
 package com.binh.cinetrack.data
 
+import androidx.paging.PagingData
 import com.binh.cinetrack.domain.Genre
 import com.binh.cinetrack.domain.Movie
 import com.binh.cinetrack.domain.MovieRepository
@@ -19,6 +20,9 @@ class FakeMovieRepository : MovieRepository {
             throw IOException("Mạng lởm rồi!")
         }
     }
+    override fun getPopularPaged(): Flow<PagingData<Movie>> {
+        return flowOf(PagingData.from(sampleMovies))
+    }
 
     override fun getTrendingMovies(): Flow<List<Movie>> {
         return flowOf(sampleMovies)
@@ -36,7 +40,7 @@ class FakeMovieRepository : MovieRepository {
     override suspend fun getPopular(page: Int): List<Movie> {
         simulateNetwork()
         return sampleMovies
-    }
+    }// bị thừa ra ở hiện tại
 
     override suspend fun getMovieDetail(id: Int): Movie? {
         simulateNetwork()

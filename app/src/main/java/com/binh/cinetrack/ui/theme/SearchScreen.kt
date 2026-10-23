@@ -35,6 +35,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -46,20 +47,13 @@ import com.binh.cinetrack.domain.Movie
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SearchScreen(
+    viewModel: SearchViewModel = hiltViewModel(),
     onMovieClick: (Movie) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
     val app = context.applicationContext as CinetrackApplication
-    val viewModel: SearchViewModel = viewModel(
-        factory = object : ViewModelProvider.Factory {
-            @Suppress("UNCHECKED_CAST")
-            override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                return SearchViewModel(RemoteMovieRepository(
-                    app.database.favoriteDao(), movieCacheDao = app.database.movieCacheDao())) as T
-            }
-        }
-    )
+
 
     val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()

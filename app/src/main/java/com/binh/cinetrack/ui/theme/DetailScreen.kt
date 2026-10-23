@@ -41,6 +41,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -55,21 +56,12 @@ import com.binh.cinetrack.data.local.MovieCacheDao
 fun DetailScreen(
     movieId: Int,
     onBackClick: () -> Unit = {},
+    viewModel: DetailViewModel = hiltViewModel(),
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
     val app = context.applicationContext as CinetrackApplication
-    val viewModel: DetailViewModel = viewModel(
-        factory = object : ViewModelProvider.Factory {
-            @Suppress("UNCHECKED_CAST")
-            override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                return DetailViewModel(
-                    RemoteMovieRepository(
-                        app.database.favoriteDao(), movieCacheDao = app.database.movieCacheDao())
-                ) as T
-            }
-        }
-    )
+
 
     LaunchedEffect(movieId) {
         viewModel.loadMovieDetail(movieId)
