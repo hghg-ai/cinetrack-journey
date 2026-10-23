@@ -27,6 +27,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -38,21 +39,13 @@ import com.binh.cinetrack.domain.Movie
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FavoriteScreen(
+    viewModel: FavoriteViewModel = hiltViewModel(),
     onMovieClick: (Movie) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
     val app = context.applicationContext as CinetrackApplication
-    val viewModel : FavoriteViewModel = viewModel(
-        factory = object : ViewModelProvider.Factory{
-          @Suppress("UNCHECHKED_CAST")
-          override fun <T : ViewModel> create(modeClass: Class<T>): T {
-              return FavoriteViewModel(RemoteMovieRepository(
-                  app.database.favoriteDao(), movieCacheDao = app.database.movieCacheDao()))
-              as T
-          }
-        }
-    )
+
     val favorites by viewModel.favorite.collectAsStateWithLifecycle()
     Scaffold(
         topBar = {
