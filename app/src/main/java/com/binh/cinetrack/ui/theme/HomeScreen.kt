@@ -191,7 +191,8 @@ fun HomeScreen(
                                         items = trendingMovies,
                                         key = { movie -> movie.id }
                                     ) { movie ->
-                                        MoviePoster(movie = movie)
+                                        MoviePoster(movie = movie,
+                                            modifier = Modifier.clickable{onMovieClick(movie)})
                                     }
                                 }
 
