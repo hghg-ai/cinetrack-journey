@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -42,22 +43,23 @@ class HomeViewModel @Inject constructor(
 
             // 1. Luồng A: Độc lập lắng nghe dữ liệu từ Room Database
             launch {
-                respository.getTrendingMovies().collect { cachedMovies ->
-                    if (cachedMovies.isNotEmpty()) {
-                      val currentStage = _uiState.value
-                        val showBanner = if (currentStage is HomeUiState.Success) currentStage
-                            .showOnlineBanner else false
-                        _uiState.value = HomeUiState.Success(
-                            movies = cachedMovies,
-                            isOffline = isOfflineState.value,
-                            showOnlineBanner = showBanner
-                        )
-                    } else if (isOfflineState.value) {
-                        // Nếu DB rỗng VÀ mạng bị lỗi -> Hiện màn hình Error
-                        _uiState.value = HomeUiState.Error(
-                            "Không có kết nối mạng và chưa có dữ liệu cache")
+                respository.getTrendingMovies()
+                    .catch { e ->
+                        _uiState.value = HomeUiState.Error(e.message ?: "Đã có lỗi xảy ra")
                     }
-                }
+                    .collect { cachedMovies ->
+                        if (cachedMovies.isNotEmpty()) {
+                            val currentStage = _uiState.value
+                            val showBanner = if (currentStage is HomeUiState.Success) currentStage.showOnlineBanner else false
+                            _uiState.value = HomeUiState.Success(
+                                movies = cachedMovies,
+                                isOffline = isOfflineState.value,
+                                showOnlineBanner = showBanner
+                            )
+                        } else if (isOfflineState.value) {
+                            _uiState.value = HomeUiState.Error("Không có kết nối mạng và chưa có dữ liệu cache")
+                        }
+                    }
             }
 
             // 2. Luồng B: Độc lập gọi API để làm mới cache vào Room DB
@@ -67,11 +69,9 @@ class HomeViewModel @Inject constructor(
                     if (isOfflineState.value || wasOffline) {
                         wasOffline = false
                         isOfflineState.value = false
-                        // Khi refresh thành công, nếu đang ở Success thì cập nhật isOffline = false
                         val currentStage = _uiState.value
                         if (currentStage is HomeUiState.Success) {
-                            _uiState.value =
-                                currentStage.copy(isOffline = false, showOnlineBanner = true)
+                            _uiState.value = currentStage.copy(isOffline = false, showOnlineBanner = true)
                         }
                         launch {
                             delay(3000L)
@@ -80,18 +80,18 @@ class HomeViewModel @Inject constructor(
                                 _uiState.value = stateAfterDelay.copy(showOnlineBanner = false)
                             }
                         }
-                    }else {
+                    } else {
                         isOfflineState.value = false
                     }
                 } catch (e: Exception) {
                     Log.e("HomeViewModel", "Lỗi nạp mạng: ${e.message}", e)
                     isOfflineState.value = true
-                    // Khi gặp lỗi mạng, nếu đang có cache
-                    // + thì giữ nguyên danh sách và bật cờ isOffline = true
-                    wasOffline = true// Ghi nhớ từng bị lỗi mạng
+                    wasOffline = true
                     val currentStage = _uiState.value
                     if (currentStage is HomeUiState.Success) {
                         _uiState.value = currentStage.copy(isOffline = true, showOnlineBanner = false)
+                    } else {
+                        _uiState.value = HomeUiState.Error(e.message ?: "Không có kết nối mạng")
                     }
                 }
             }

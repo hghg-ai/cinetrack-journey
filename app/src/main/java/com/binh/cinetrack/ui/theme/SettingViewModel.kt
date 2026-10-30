@@ -21,9 +21,20 @@ class SettingViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = AppTheme.SYSTEM
         )
+    val isNotificationEnabled: StateFlow<Boolean> = themePreferences.notificationEnabledFlow
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = false
+        )
     fun selectTheme(theme: AppTheme){
         viewModelScope.launch {
             themePreferences.saveTheme(theme)
+        }
+    }
+    fun toggleNotification(enabled: Boolean){
+        viewModelScope.launch {
+            themePreferences.saveNotificationEnabled(enabled)
         }
     }
 }

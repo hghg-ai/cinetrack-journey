@@ -37,6 +37,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -133,7 +134,9 @@ fun DetailScreen(
                                 }
                             },
                             actions = {
-                                IconButton(onClick = { viewModel.toggleFavorite(movie) }) {
+                                IconButton(onClick = { viewModel.toggleFavorite(movie) },
+                                    modifier = Modifier.testTag("favorite_button")
+                                ) {
                                     Icon(
                                         imageVector = if (isFav) Icons.Default.Favorite
                                         else Icons.Default.FavoriteBorder,
@@ -180,7 +183,7 @@ fun DetailScreen(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
-                                    text = "★ ${movie.rating}",
+                                    text = "★ ${"%.1f".format(movie.rating)}",
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.Bold,
                                     color = Color(0xFFFFC907)
