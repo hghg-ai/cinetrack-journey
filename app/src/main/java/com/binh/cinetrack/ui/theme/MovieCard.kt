@@ -35,7 +35,8 @@ fun MovieCard(
     Surface(
         color = MaterialTheme.colorScheme.surface,
         shape = RoundedCornerShape(12.dp),
-        // CHÚ THÍCH: Đặt clickable trực tiếp lên Surface cùng với testTag để UI Test thực hiện bấm mở màn Detail
+        // CHÚ THÍCH: Đặt clickable trực tiếp lên Surface cùng với testTag
+        // để UI Test thực hiện bấm mở màn Detail
         modifier = modifier
             .testTag("movie_card")
             .clickable { onMovieClick(movie) }

@@ -6,6 +6,7 @@ plugins {
     alias(libs.plugins.ksp)
     id("org.jetbrains.kotlin.plugin.serialization") version "2.4.21"
     id("com.google.dagger.hilt.android")
+    id("org.jlleitschuh.gradle.ktlint")
 }
 
 android {
@@ -19,7 +20,7 @@ android {
         minSdk = 24
         targetSdk = 37
         versionCode = 1
-        versionName = "1.0"
+        versionName = "1.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
