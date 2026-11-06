@@ -29,6 +29,9 @@ class HomeViewModel @Inject constructor(
     private val _uiState = MutableStateFlow<HomeUiState>(HomeUiState.Loading)
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
+    private val _isRefreshing = MutableStateFlow(false)
+    val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
+
     // Cờ trạng thái lỗi mạng
     private val isOfflineState = MutableStateFlow(false)
     private var wasOffline = false
@@ -39,7 +42,9 @@ class HomeViewModel @Inject constructor(
 
     fun loadAndRefresh() {
         viewModelScope.launch {
-            _uiState.value = HomeUiState.Loading
+            if(_uiState.value !is HomeUiState.Success) {
+                _uiState.value = HomeUiState.Loading
+            }
 
             // 1. Luồng A: Độc lập lắng nghe dữ liệu từ Room Database
             launch {
@@ -64,6 +69,7 @@ class HomeViewModel @Inject constructor(
 
             // 2. Luồng B: Độc lập gọi API để làm mới cache vào Room DB
             launch {
+                _isRefreshing.value = true
                 try {
                     respository.refreshTrending()
                     if (isOfflineState.value || wasOffline) {
@@ -93,6 +99,8 @@ class HomeViewModel @Inject constructor(
                     } else {
                         _uiState.value = HomeUiState.Error(e.message ?: "Không có kết nối mạng")
                     }
+                }finally {
+                    _isRefreshing.value = false
                 }
             }
         }

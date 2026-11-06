@@ -1,6 +1,14 @@
 package com.binh.cinetrack.ui.theme
 
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -8,7 +16,12 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -24,6 +37,17 @@ fun CinetrackApp() {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
+    var homeRefreshTrigger by remember { mutableIntStateOf(0) }
+    var isHomeLoading by remember { mutableStateOf(false) }
+    val infiniteTransition = rememberInfiniteTransition()
+    val rotationAngle by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 360f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 800, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        )
+    )
     val bottomBarRoutes = listOf(
         NavRoute.Home,
         NavRoute.Search,
@@ -36,17 +60,38 @@ fun CinetrackApp() {
             if (showBottomBar) {
                 NavigationBar {
                     bottomBarRoutes.forEach { screen ->
+
+                        val iconVector = if (screen == NavRoute.Home && isHomeLoading){
+                            Icons.Default.Refresh
+                        }else{
+                            screen.icon!!
+                        }
+
                         NavigationBarItem(
-                            icon = { Icon(screen.icon!!, contentDescription = screen.title) },
+                            icon = {
+                                Icon(
+                                iconVector,
+                                contentDescription = screen.title,
+                                    modifier = if(screen == NavRoute.Home && isHomeLoading){
+                                        Modifier.rotate(rotationAngle)
+                                    }else{
+                                        Modifier
+                                    }
+                                )
+                                   },
                             label = { Text(screen.title!!) },
                             selected = currentRoute == screen.route,
                             onClick = {
+                                if(currentRoute == screen.route && screen == NavRoute.Home){
+                                    homeRefreshTrigger++
+                                }else{
                                 navController.navigate(screen.route) {
                                     popUpTo(navController.graph.findStartDestination().id) {
                                         saveState = true
                                     }
                                     launchSingleTop = true
                                     restoreState = true
+                                }
                                 }
                             }
                         )
@@ -62,6 +107,8 @@ fun CinetrackApp() {
         ) { // màn home
             composable(NavRoute.Home.route) {
                 HomeScreen(
+                    homeRefreshTrigger = homeRefreshTrigger,
+                    onLoadingStateChanged = {loading -> isHomeLoading = loading},
                     onMovieClick = { movie ->
                         navController.navigate(NavRoute.Detail.createRoute(movie.id))
                     },

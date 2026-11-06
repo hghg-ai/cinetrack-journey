@@ -1,5 +1,4 @@
 package com.binh.cinetrack.ui.theme
-
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -43,14 +42,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.binh.cinetrack.CinetrackApplication
-import com.binh.cinetrack.data.RemoteMovieRepository
-import com.binh.cinetrack.data.local.MovieCacheDao
+import com.binh.cinetrack.R
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -168,7 +163,8 @@ fun DetailScreen(
                                 .fillMaxWidth()
                                 .aspectRatio(16f / 9f),
                             contentScale = ContentScale.Crop,
-                            error = painterResource(id = com.binh.cinetrack.R.drawable.ic_launcher_background)
+                            placeholder = painterResource(id= R.drawable.ic_logo),
+                            error = painterResource(id = R.drawable.ic_logo)
                         )
                         Column(
                             modifier = Modifier.padding(16.dp)
