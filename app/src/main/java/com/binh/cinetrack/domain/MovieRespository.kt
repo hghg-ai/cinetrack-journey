@@ -15,4 +15,7 @@ interface MovieRepository {
     fun getFavorites(): Flow<List<Movie>>
     fun isFavorite(movieId: Int): Flow<Boolean>
     suspend fun toggleFavorite(movie: Movie)
+    suspend fun getMovieCredits(id: Int): List<Cast>
+    suspend fun getSimilarMovies(id: Int): List<Movie>
+    fun getMoviesByGenrePaged(genreId: Int): Flow<PagingData<Movie>>
 }

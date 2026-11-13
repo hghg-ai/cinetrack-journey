@@ -7,11 +7,13 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import androidx.core.app.NotificationCompat
+import androidx.core.net.toUri
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.binh.cinetrack.MainActivity
 import com.binh.cinetrack.R
+import com.binh.cinetrack.domain.Movie
 import com.binh.cinetrack.domain.MovieRepository
 import com.binh.cinetrack.domain.top5ByRating
 import dagger.assisted.Assisted
@@ -34,14 +36,16 @@ class DailyTrendingWorker @AssistedInject constructor(
             val movies = repository.getTrendingMovies().firstOrNull() ?: repository.getMovies()
             if (movies.isEmpty()) return Result.success()
 
-            val topTitles =  movies.top5ByRating().take(2).joinToString(", "){it.title}
-            showNotification(topTitles)
+            val sortedMovies = movies.top5ByRating()
+            val topMovie = sortedMovies.first()
+            val topTitles =  movies.top5ByRating().take(1).joinToString(", "){it.title}
+            showNotification(topTitles, topMovie)
             Result.success()
         }catch (e: Exception){
             Result.retry()
         }
     }
-    private fun showNotification(movieTitles: String) {
+    private fun showNotification(movieTitles: String, topMovie: Movie) {
         val notificationManager =
             context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         // Tạo Notification Channel (Yêu cầu bắt buộc từ Android 8.0 / API 26+)
@@ -56,11 +60,13 @@ class DailyTrendingWorker @AssistedInject constructor(
         }
 
         // Tạo PendingIntent để khi bấm vào Notification sẽ mở MainActivity
-        val intent = Intent(context, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NEW_TASK
-        }
+        val deepLinkUri = "cinetrack://detail/${topMovie.id}".toUri()
+        val intent = Intent(Intent.ACTION_VIEW,deepLinkUri,context,
+            MainActivity::class.java)
         val pendingIntent = PendingIntent.getActivity(
-            context,0,intent,
+            context,
+            topMovie.id,
+            intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
         // Xây dựng giao diện Notìication

@@ -14,6 +14,8 @@ sealed class NavRoute ( val route: String, val title: String?= null,
     object Favorites: NavRoute("favorite","Yêu thích", Icons.Default.Favorite)
     object Detail: NavRoute("detail/{movieID}"){
         fun createRoute(movieID: Int) = "detail/$movieID"
-
+    }
+    object GenreMovies : NavRoute("genre/{genreId}/{genreName}"){
+        fun createRoute(genreId: Int, genreName: String) = "genre/$genreId/$genreName"
     }
 }

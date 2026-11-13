@@ -10,6 +10,12 @@ data class Movie(
     val posterPath: String = "",
     val backdropPath: String = ""
 )
+data class Cast(
+    val id: Int,
+    val name: String,
+    val character: String,
+    val profilePath: String
+)
 data class Genre(val id:Int, val name:String)
 fun Movie.prettyPrint() {
     val shortOverview = if (overview.length > 80) {

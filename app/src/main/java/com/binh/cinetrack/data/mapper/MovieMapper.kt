@@ -1,12 +1,16 @@
 package com.binh.cinetrack.data.mapper
 
 import com.binh.cinetrack.data.local.CachedMovieEntity
+import com.binh.cinetrack.data.remote.dto.CastDto
 import com.binh.cinetrack.data.remote.dto.MovieDetailDto
 import com.binh.cinetrack.data.remote.dto.MovieDto
+import com.binh.cinetrack.domain.Cast
 import com.binh.cinetrack.domain.Movie
 
 private const val POSTER_BASE_URL = "https://image.tmdb.org/t/p/w500"
 private const val BACKDROP_BASE_URL = "https://image.tmdb.org/t/p/w780"
+
+private const val PROFILE_BASE_URL = "https://image.tmdb.org/t/p/w185"
 
 fun MovieDto.toMovie() : Movie {
     return Movie(
@@ -58,5 +62,13 @@ fun Movie.toCachedEntity(category: String) : CachedMovieEntity{
         backdropPath = this.backdropPath,
         rating = this.rating,
         releaseDate = this.releaseDate
+    )
+}
+fun CastDto.toCast(): Cast{
+    return Cast(
+        id = this.id,
+        name = this.name,
+        character = this.character,
+        profilePath = this.profilePath?.let {"$PROFILE_BASE_URL$it"} ?: ""
     )
 }
