@@ -7,10 +7,12 @@ import com.binh.cinetrack.BuildConfig
 import com.binh.cinetrack.data.local.FavoriteDao
 import com.binh.cinetrack.data.local.MovieCacheDao
 import com.binh.cinetrack.data.mapper.toCachedEntity
+import com.binh.cinetrack.data.mapper.toCast
 import com.binh.cinetrack.data.mapper.toDomain
 import com.binh.cinetrack.data.mapper.toEntity
 import com.binh.cinetrack.data.mapper.toMovie
 import com.binh.cinetrack.data.remote.dto.TmdbApiService
+import com.binh.cinetrack.domain.Cast
 import com.binh.cinetrack.domain.Genre
 import com.binh.cinetrack.domain.Movie
 import com.binh.cinetrack.domain.MovieRepository
@@ -105,5 +107,30 @@ class RemoteMovieRepository @Inject constructor(
         } else {
             favoriteDao.insert(movie.toEntity())
         }
+    }
+    override suspend fun getMovieCredits(id: Int): List<Cast>{
+        return try{
+            val response = apiService.getMovieCredits(id, apiKey)
+            response.cast.map { it.toCast() }
+        } catch (e: Exception){
+            emptyList()
+        }
+    }
+
+    override suspend fun getSimilarMovies(id: Int): List<Movie> {
+        return try{
+            val response = apiService.getSimilarMovies(id, apiKey)
+            response.results.map{it.toMovie()}
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+
+    override fun getMoviesByGenrePaged(genreId: Int): Flow<PagingData<Movie>> {
+        return Pager(
+            config = PagingConfig(pageSize = 20, enablePlaceholders = false)
+        ){
+            GenreMoviesPagingSource(apiService, apiKey, genreId)
+        }.flow
     }
 }

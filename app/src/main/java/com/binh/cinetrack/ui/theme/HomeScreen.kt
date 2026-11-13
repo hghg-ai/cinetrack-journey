@@ -1,6 +1,10 @@
 package com.binh.cinetrack.ui.theme
 
-
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -15,12 +19,15 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -29,9 +36,13 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -44,13 +55,17 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.itemKey
 import com.binh.cinetrack.CinetrackApplication
 import com.binh.cinetrack.domain.Movie
 import com.binh.cinetrack.domain.top5ByRating
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
+    homeRefreshTrigger: Int =0,
+    onLoadingStateChanged: (Boolean) -> Unit = {},
     viewModel: HomeViewModel = hiltViewModel(),
     onMovieClick: (Movie) -> Unit = {},
     onSettingsClick: () -> Unit = {},
@@ -60,8 +75,27 @@ fun HomeScreen(
     val context = LocalContext.current
     val app = context.applicationContext as CinetrackApplication
 
-
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val isRefreshingViewModel by viewModel.isRefreshing.collectAsStateWithLifecycle()
+    val isRefreshing = isRefreshingViewModel || popularMovies.loadState.refresh is LoadState.Loading
+
+    LaunchedEffect(isRefreshing) {
+        onLoadingStateChanged(isRefreshing)
+    }
+
+    LaunchedEffect(homeRefreshTrigger) {
+        if (homeRefreshTrigger > 0) {
+            viewModel.loadAndRefresh()
+            popularMovies.refresh()
+        }
+    }
+
+    val gridState = rememberLazyGridState()
+    val coroutineScope = rememberCoroutineScope()
+
+    val showScrollToTopButton by remember {
+        derivedStateOf { gridState.firstVisibleItemIndex > 2 }
+    }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -72,7 +106,8 @@ fun HomeScreen(
                         text = "CineTrack",
                         fontWeight = FontWeight.Bold
                     )
-                },  actions = {
+                },
+                actions = {
                     IconButton(onClick = onSettingsClick) {
                         Icon(
                             imageVector = Icons.Default.Settings,
@@ -84,12 +119,19 @@ fun HomeScreen(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
                 ),
-                )
+            )
         }
     ) { innerPadding ->
+        PullToRefreshBox(
+            isRefreshing = isRefreshing,
+            onRefresh = {
+                viewModel.loadAndRefresh()
+                popularMovies.refresh()
+            },
+            modifier = Modifier.fillMaxSize().padding(innerPadding)
+        ) {
         Box(
             modifier = Modifier.fillMaxSize()
-                .padding(innerPadding)
         ) {
             when (val currentStage = state) {
                 is HomeUiState.Loading -> {
@@ -112,34 +154,33 @@ fun HomeScreen(
                             textAlign = TextAlign.Center
                         )
                         Spacer(modifier = Modifier.height(16.dp))
-                        Button(onClick = { viewModel.loadAndRefresh()
-                        popularMovies.retry()}) {
+                        Button(onClick = {
+                            viewModel.loadAndRefresh()
+                            popularMovies.retry()
+                        }) {
                             Text(text = "Thử lại")
                         }
                     }
                 }
+
                 is HomeUiState.Success -> {
                     val allMovies = currentStage.movies
                     val trendingMovies = remember(allMovies) { allMovies.top5ByRating() }
                     LazyVerticalGrid(
+                        state = gridState,
                         columns = GridCells.Fixed(2),
-                        contentPadding = PaddingValues(
-                            top = innerPadding.calculateTopPadding() + 16.dp,
-                            bottom = innerPadding.calculateBottomPadding() + 16.dp,
-                            start = 16.dp,
-                            end = 16.dp
-                        ),
+                        contentPadding = PaddingValues(16.dp),
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp),
                         modifier = Modifier.fillMaxSize()
                     ) { // Banner đỏ: hiện khi mất mạng
-                        if (currentStage.isOffline){
-                            item(span = { GridItemSpan(2)}){
+                        if (currentStage.isOffline) {
+                            item(span = { GridItemSpan(2) }) {
                                 Surface(
                                     color = MaterialTheme.colorScheme.errorContainer,
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .clickable{
+                                        .clickable {
                                             viewModel.loadAndRefresh()
                                             popularMovies.retry()
                                         }
@@ -155,8 +196,8 @@ fun HomeScreen(
                             }
                         }
                         //Banner xanh: Hiện khi vừa kết nối mạng trở lại
-                        else if (currentStage.showOnlineBanner){
-                            item(span = { GridItemSpan(2)}){
+                        else if (currentStage.showOnlineBanner) {
+                            item(span = { GridItemSpan(2) }) {
                                 Surface(
                                     color = MaterialTheme.colorScheme.primaryContainer,
                                     modifier = Modifier.fillMaxWidth()
@@ -191,8 +232,9 @@ fun HomeScreen(
                                         items = trendingMovies,
                                         key = { movie -> movie.id }
                                     ) { movie ->
-                                        MoviePoster(movie = movie,
-                                            modifier = Modifier.clickable{onMovieClick(movie)})
+                                        MoviePoster(
+                                            movie = movie,
+                                            modifier = Modifier.clickable { onMovieClick(movie) })
                                     }
                                 }
 
@@ -206,68 +248,57 @@ fun HomeScreen(
                                 )
                             }
                         }
-                        if (popularMovies.loadState.refresh is LoadState.Error){
-                            item(span = { GridItemSpan(2)}){
-                                Column(
-                                    modifier = Modifier.fillMaxWidth()
-                                        .padding(16.dp),
-                                    horizontalAlignment = Alignment.CenterHorizontally
-                                ){
-                                    Text(
-                                        text = "Không thể tải danh sách phim",
-                                        color= MaterialTheme.colorScheme.error
-                                    )
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                    Button(onClick = {popularMovies.retry()} ) {
-                                        Text("Thử lại")
-                                    }
-                                }
+                        if (popularMovies.loadState.refresh is LoadState.Error) {
+                            item(span = { GridItemSpan(2) }) {
+                                Text(
+                                    text = "Không thể tải danh sách phim",
+                                    color = MaterialTheme.colorScheme.error,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    textAlign = TextAlign.Center,
+                                    modifier = Modifier.fillMaxWidth().padding(16.dp)
+                                )
+
                             }
                         }
+
 
                         // Grid 2 cột: Popular Movies
                         items(
                             count = popularMovies.itemCount,
-                            key = {index -> "${popularMovies[index]?.id?:0}_$index"}
+                            key = popularMovies.itemKey { movie -> movie.id }
                         ) { index ->
                             val movie = popularMovies[index]
-                            if (movie != null){
-                            MovieCard(
-                                movie = movie,
-                                onMovieClick = onMovieClick
-                            )
-                        }
-                    }
-                        when (val appendState = popularMovies.loadState.append){
-                        is LoadState.Loading ->{
-                            item(span = { GridItemSpan(2)}){
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(16.dp),
-                                    contentAlignment = Alignment.Center
-                                ){
-                                    CircularProgressIndicator()
-                                }
+                            if (movie != null) {
+                                MovieCard(
+                                    movie = movie,
+                                    onMovieClick = onMovieClick
+                                )
                             }
                         }
-                            is LoadState.Error -> {
-                                item(span = { GridItemSpan(2)}){
-                                    Column(
+                        when (popularMovies.loadState.append) {
+                            is LoadState.Loading -> {
+                                item(span = { GridItemSpan(2) }) {
+                                    Box(
                                         modifier = Modifier
                                             .fillMaxWidth()
                                             .padding(16.dp),
-                                        horizontalAlignment = Alignment.CenterHorizontally
+                                        contentAlignment = Alignment.Center
                                     ) {
-                                        Text(
-                                            text = "Không thể tải thêm phim",
-                                            color = MaterialTheme.colorScheme.error
-                                        )
-                                        Spacer(modifier = Modifier.height(8.dp))
-                                        Button(onClick = {popularMovies.retry() }) {
-                                            Text("Thử lại")
-                                        }
+                                        CircularProgressIndicator()
                                     }
+                                }
+                            }
+
+                            is LoadState.Error -> {
+                                item(span = { GridItemSpan(2) }) {
+                                    Text(
+                                        text = "Không thể tải thêm phim",
+                                        color = MaterialTheme.colorScheme.error,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        textAlign = TextAlign.Center,
+                                        modifier = Modifier.fillMaxWidth().padding(16.dp)
+
+                                    )
                                 }
                             }
                             else -> {}
@@ -275,6 +306,31 @@ fun HomeScreen(
                     }
                 }
             }
+
+            AnimatedVisibility(
+                visible = showScrollToTopButton,
+                enter = fadeIn() + slideInVertically { it },
+                exit = fadeOut() + slideOutVertically { it },
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(24.dp)
+            ) {
+                FloatingActionButton(
+                    onClick = {
+                        coroutineScope.launch {
+                            gridState.scrollToItem(0)
+                        }
+                    },
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.KeyboardArrowUp,
+                        contentDescription = "Trở về đầu trang"
+                    )
+                }
+             }
+          }
         }
     }
 }

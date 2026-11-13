@@ -3,7 +3,6 @@ package com.binh.cinetrack.ui.theme
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.binh.cinetrack.data.RemoteMovieRepository
 import com.binh.cinetrack.domain.Movie
 import com.binh.cinetrack.domain.MovieRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -49,12 +48,16 @@ class DetailViewModel @Inject constructor(
             try {
                 val movieDeferred = async { repository.getMovieDetail(movieId) }
                 val genresDeferred = async { repository.getGenres() }
+                val castDeferred = async { repository.getMovieCredits(movieId) }
+                val similarDeferred = async { repository.getSimilarMovies(movieId) }
 
                 val movie = movieDeferred.await()
                 val genres = genresDeferred.await()
+                val cast = castDeferred.await()
+                val similarMovies = similarDeferred.await()
 
                 if (movie != null) {
-                    _uiState.value = DetailUiState.Success(movie, genres)
+                    _uiState.value = DetailUiState.Success(movie, genres, cast, similarMovies)
                 } else {
                     _uiState.value = DetailUiState.Error("Không có thông tin phim này")
                 }

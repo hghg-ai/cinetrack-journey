@@ -6,6 +6,7 @@ plugins {
     alias(libs.plugins.ksp)
     id("org.jetbrains.kotlin.plugin.serialization") version "2.4.21"
     id("com.google.dagger.hilt.android")
+    id("org.jlleitschuh.gradle.ktlint")
 }
 
 android {
@@ -19,18 +20,20 @@ android {
         minSdk = 24
         targetSdk = 37
         versionCode = 1
-        versionName = "1.0"
+        versionName = "1.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         val properties = Properties()
         val localPropertiesFile = project.rootProject.file("local.properties")
-        if (localPropertiesFile.exists()){
+        if (localPropertiesFile.exists()) {
             properties.load(localPropertiesFile.inputStream())
         }
-        buildConfigField("String","TMDB_API_KEY",
-            "\"${properties.getProperty("TMDB_API_KEY","")}\"")
-
+        buildConfigField(
+            "String",
+            "TMDB_API_KEY",
+            "\"${properties.getProperty("TMDB_API_KEY","")}\"",
+        )
     }
 
     buildTypes {
@@ -38,7 +41,7 @@ android {
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
+                "proguard-rules.pro",
             )
         }
     }
@@ -46,7 +49,7 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
-    buildFeatures{
+    buildFeatures {
         compose = true
         buildConfig = true
     }
@@ -71,7 +74,7 @@ dependencies {
     val okhttpVersion = "5.5.0"
     val kotlinxSerializationVersion = "1.11.0"
     val roomVersion = "2.8.5"
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:${kotlinxSerializationVersion}")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:$kotlinxSerializationVersion")
     implementation("com.squareup.retrofit2:retrofit:$retrofitVersion")
     implementation("com.squareup.retrofit2:converter-kotlinx-serialization:$retrofitVersion")
     implementation("com.squareup.okhttp3:okhttp:$okhttpVersion")

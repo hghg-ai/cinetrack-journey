@@ -1,9 +1,6 @@
 package com.binh.cinetrack.data.remote.dto
 
 
-import com.binh.cinetrack.data.remote.dto.GenreListResponseDto
-import com.binh.cinetrack.data.remote.dto.MovieDetailDto
-import com.binh.cinetrack.data.remote.dto.MovieResponseDto
 import retrofit2.http.GET
 import retrofit2.http.Path
 import retrofit2.http.Query
@@ -37,4 +34,22 @@ interface TmdbApiService {
     suspend fun getGenres(
         @Query("api_key") apiKey: String
     ): GenreListResponseDto
+
+    @GET("movie/{id}/credits")
+    suspend fun getMovieCredits(
+        @Path("id") id: Int,
+        @Query("api_key") apiKey: String
+    ): CreditsResponseDto
+
+    @GET("movie/{id}/similar")
+    suspend fun getSimilarMovies(
+        @Path("id") id: Int,
+        @Query("api_key") apiKey: String
+    ): MovieResponseDto
+    @GET("discover/movie")
+    suspend fun discoverMoviesByGenre(
+        @Query("api_key") apiKey: String,
+        @Query("with_genres") genreID: Int,
+        @Query("page") page: Int = 1
+    ): MovieResponseDto
 }

@@ -50,7 +50,7 @@ class SearchViewModel @Inject constructor(
                                     emit(SearchUiState.Success(results))
                                 }
                             } catch (e: IOException) {
-                                emit(SearchUiState.Error(e.message ?: "Lỗi kết nối mạng"))
+                                emit(SearchUiState.Error( "Không có kết nối mạng"))
                             } catch (e: Exception) {
                                 emit(SearchUiState.Error("Đã có lỗi xảy ra"))
                             }
@@ -80,7 +80,7 @@ class SearchViewModel @Inject constructor(
                         _uiState.value = SearchUiState.Success(results)
                     }
                 } catch (e: IOException) {
-                    _uiState.value = SearchUiState.Error(e.message ?: "Lỗi kết nối mạng")
+                    _uiState.value = SearchUiState.Error( "Không có kết nối mạng")
                 } catch (e: Exception) {
                     _uiState.value = SearchUiState.Error("Đã có lỗi xảy ra")
                 }

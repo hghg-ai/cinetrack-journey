@@ -30,8 +30,8 @@ fun MoviePoster(
         contentDescription = movie.title,
         modifier = modifier,
         contentScale = ContentScale.Crop,
-        placeholder = painterResource(id = R.drawable.ic_launcher_background),
-        error = painterResource(id = R.drawable.ic_launcher_background)
+        placeholder = painterResource(id = R.drawable.ic_logo),
+        error = painterResource(id = R.drawable.ic_logo)
     )
 }
 

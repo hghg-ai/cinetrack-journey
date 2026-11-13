@@ -1,6 +1,7 @@
 package com.binh.cinetrack.data
 
 import androidx.paging.PagingData
+import com.binh.cinetrack.domain.Cast
 import com.binh.cinetrack.domain.Genre
 import com.binh.cinetrack.domain.Movie
 import com.binh.cinetrack.domain.MovieRepository
@@ -66,4 +67,11 @@ class FakeMovieRepository : MovieRepository {
     }
 
     override suspend fun toggleFavorite(movie: Movie) {}
+
+    override suspend fun getMovieCredits(id: Int): List<Cast> = emptyList()
+    override suspend fun getSimilarMovies(id: Int): List<Movie> = emptyList()
+    override fun getMoviesByGenrePaged(genreId: Int): Flow<PagingData<Movie>> {
+        return flowOf(PagingData.from(sampleMovies))
+    }
 }
+

@@ -1,6 +1,5 @@
 package com.binh.cinetrack.data.remote.dto
 
-import com.binh.cinetrack.domain.Genre
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -42,4 +41,17 @@ data class MovieDto(
     @SerialName("release_date") val releaseDate: String? = "",
     @SerialName("vote_average") val voteAverage: Double? = 0.0,
     @SerialName("genre_ids") val genreIds: List<Int> = emptyList()
+)
+@Serializable
+data class CreditsResponseDto(
+    val id: Int,
+   val cast: List<CastDto> = emptyList()
+)
+@Serializable
+data class CastDto(
+    val id: Int,
+    val name: String = "",
+    val character: String = "",
+    @SerialName("profile_path")
+    val profilePath: String? = null
 )
