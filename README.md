@@ -1,3 +1,4 @@
+
 # CineTrack - Application xem phim
 
 ![CI Status](https://github.com/hghg-ai/cinetrack-journey/actions/workflows/ci.yml/badge.svg)
@@ -15,3 +16,6 @@ phim phổ biến và lưu trữ danh sách phim yêu thích.
 - **Mạng:** Retrofit2 + Kotlinx Serialization.
 - **Tác vụ ngầm:** WorkManager + HiltWorker.
 - **Testing:** JUnit4, Coroutines Test, Turbine, Compose UI Test.
+
+[video demo](https://drive.google.com/file/d/1QI30WunQhZpOMZWXqzDmZgfEC_OvGbby/view?usp=drive_link)
+
