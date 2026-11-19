@@ -101,3 +101,24 @@ Trong Jetpack Compose, thứ tự của Modifier rất quan trọng vì mỗi mo
 Modifier.padding(16.dp).background(Color.Red): Trước tiên tạo khoảng trống 16.dp xung quanh nội dung, sau đó tô màu đỏ cho vùng còn lại bên trong (tức là vùng padding 16.dp ở ngoài cùng không có màu đỏ).
 
 Modifier.background(Color.Red).padding(16.dp): Trước tiên tô màu đỏ toàn bộ khung (bao gồm cả phần đệm 16.dp), sau đó mới tạo khoảng trống 16.dp đẩy nội dung bên trong vào xa viền màu đỏ (tức là nền đỏ phủ ra tới mép ngoài, tạo thành viền/lớp nền đỏ bao quanh padding).
+
+Tuần 4
+1. Back stack là gì? Từ Home vào Detail rồi bấm back, chuyện gì xảy ra với composable Detail?
+   Back stack là gì: Là ngăn xếp lưu lịch sử điều hướng các màn hình theo cơ chế LIFO (Last-In, First-Out — Vào sau, Ra trước). Mỗi khi mở màn hình mới, điểm đến đó được push lên đỉnh stack; khi quay lại, điểm đến trên đỉnh bị pop ra.
+   Khi từ Home vào Detail rồi bấm back:
+   Màn hình Detail bị pop khỏi Back stack.
+   Composable Detail bị gỡ bỏ khỏi Composition.
+   Các state cục bộ chỉ nằm trong Detail bằng remember (không qua ViewModel hay rememberSaveable) sẽ bị hủy cùng composable đó.
+   Màn hình Home bên dưới được hiển thị trở lại.
+   
+2. Vì sao truyền movieId thay vì truyền cả Movie object?
+   Single Source of Truth (Một nguồn dữ liệu duy nhất): Object Movie mang từ Home sang chỉ là bản chụp tại thời điểm trước đó. Dùng movieId giúp Detail (qua DetailViewModel / Repository) luôn lấy dữ liệu mới nhất và đồng nhất.
+   Tránh vượt giới hạn kích thước dữ liệu truyền qua Bundle / route (TransactionTooLargeException): Dữ liệu điều hướng/lưu trạng thái có giới hạn dung lượng nhỏ; truyền nguyên object lớn hoặc lồng ghép nhiều trường dễ gây lỗi hoặc crash khi hệ thống lưu/khôi phục trạng thái.Route gọn nhẹ, dễ chuẩn hóa & hỗ trợ Deep Link: Truyền ID (Int hoặc String) trên route rõ ràng, ít lỗi parse và dễ mở trực tiếp màn Detail từ link/thông báo.
+
+ 3. Thí nghiệm: Gõ chữ vào Search rồi xoay màn hình
+   Thí nghiệm Tuần 4 — Gõ chữ vào Search rồi xoay màn hình
+Dự đoán hiện tượng:
+  Nếu từ khóa tìm kiếm đang giữ bằng remember { mutableStateOf("") } ngay trong Composable: xoay màn hình sẽ làm mất chữ đã gõ và ô tìm kiếm quay về rỗng "".
+  Nếu từ khóa và kết quả đã đưa vào ViewModel (như cách bạn đang làm với SearchViewModel và collectAsStateWithLifecycle()): xoay màn hình sẽ giữ nguyên cả từ khóa lẫn trạng thái/kết quả tìm kiếm.
+Dự đoán nguyên nhân:
+  Xoay màn hình kích hoạt Configuration Change, khiến Activity bị hủy và tạo lại. Bộ nhớ của remember gắn với vòng đời Composition/Activity cũ nên bị xóa khi Activity hủy, trong khi ViewModel tồn tại xuyên suốt Configuration Change nên giữ được state.  
