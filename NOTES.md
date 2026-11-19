@@ -244,10 +244,36 @@ Có thể phát sinh xung đột/mất đồng bộ trạng thái giữa nhiều
 4. cachedIn(viewModelScope) để làm gì? Bỏ đi thì xoay màn hình bị sao?
 cachedIn(viewModelScope) để lưu trữ (cache) luồng PagingData trong phạm vi viewModelScope để giữ dữ liệu phân trang khi có thay đổi cấu hình hoặc khi collector mới đăng ký lắng nghe, tránh việc phải tải lại từ đầu một cách không cần thiết.
 
-Bỏ đi thì xoay màn hình bị sao: Khi xoay màn hình (Configuration Change), Activity bị hủy và tạo lại. Nếu không có cachedIn(viewModelScope), luồng PagingData không được giữ cache sẵn trong scope của ViewModel mà có thể bị kích hoạt tải lại từ đầu / mất trạng thái phân trang đã tải trước đó khi UI kết nối lại sau xoay màn hình.   
+Bỏ đi thì xoay màn hình bị sao: Khi xoay màn hình (Configuration Change), Activity bị hủy và tạo lại. Nếu không có cachedIn(viewModelScope), luồng PagingData không được giữ cache sẵn trong scope của ViewModel mà có thể bị kích hoạt tải lại từ đầu / mất trạng thái phân trang đã tải trước đó khi UI kết nối lại sau xoay màn hình.
 
 5. Trong PagingSource, nextKey = null mang ý nghĩa gì?
 Trong LoadResult.Page(data = ..., prevKey = ..., nextKey = ...), nextKey là key dùng cho lần gọi load() tiếp theo để lấy các trang dữ liệu phía sau trang hiện tại.   
 
 Khi nextKey = null, điều đó báo cho Paging biết là không còn trang dữ liệu nào phía sau nữa (đã chạm tới cuối danh sách/hết dữ liệu để phân trang), nên Paging sẽ không tiếp tục gọi load() để tải thêm trang sau nữa.
    Đảm bảo dữ liệu đầu vào đồng nhất: Model domain/UI nhận được giá trị chuẩn ngay từ tầng chuyển đổi dữ liệu, giúp tái sử dụng model ở nhiều màn hình hoặc test dễ dàng hơn.
+
+
+Tuần 9
+
+1. Vì sao ViewModel test được dễ? Kể đúng 2 quyết định kiến trúc từ các tuần trước
+   ViewModel test được dễ là nhờ 2 quyết định kiến trúc làm từ các tuần trước:
+   Phụ thuộc vào Interface (MovieRepository) thay vì gán cứng implementation cụ thể (như RemoteMovieRepository).
+   Tiêm phụ thuộc qua constructor (Dependency Injection — DI), giúp test truyền thẳng FakeMovieRepository vào mà không cần gọi mạng thật hay khởi tạo tầng dữ liệu nặng.
+   
+2. Fake khác Mock thế nào?
+   Trong nhóm Test Doubles (các đối tượng thay thế dependency thật khi test):
+   Fake: Là một implementation có logic hoạt động đơn giản thật sự, nhưng rút gọn/giả lập cho môi trường test thay vì dùng hạ tầng thật (ví dụ FakeMovieRepository dùng danh sách có sẵn trong bộ nhớ và cho phép cài dữ liệu hoặc ra lệnh ném lỗi thay vì gọi API/DB thật).
+    Mock: Là đối tượng giả lập được tạo ra (thường bằng framework/thư viện mock) để ghi nhận tương tác (được gọi hàm nào, với tham số gì, bao nhiêu lần) và cấu hình sẵn hành vi/giá trị trả về cho từng lời gọi.
+   
+3. runTest làm gì với delay? Vì sao test debounce không phải đợi 300ms thật?
+   runTest làm gì với delay: runTest (từ kotlinx-coroutines-test) chạy test với thời gian ảo (virtual time) thông qua TestCoroutineScheduler. Khi gặp delay(...), thay vì ngủ theo đồng hồ thật của hệ điều hành, coroutine tạm dừng trên đồng hồ ảo và có thể được tua nhanh (advanceTimeBy(...) / advanceUntilIdle()).
+   Vì sao test debounce không phải đợi 300ms thật: Vì thời gian 300ms trong debounce(300) nằm trên thời gian ảo của runTest. Bạn chỉ cần điều khiển/tua đồng hồ ảo qua mốc 300ms là logic debounce đã kích hoạt ngay lập tức, giúp bộ test chạy nhanh (toàn bộ unit test chạy gọn trong vài giây, không tốn thời gian chờ thật).
+   
+ 4. Vì sao dùng WorkManager thay vì một coroutine chạy vòng lặp vô hạn?
+    Vòng đời & sự bền vững: Coroutine thông thường (như trong scope của app/ViewModel) chỉ sống khi app/scope còn tồn tại — nếu người dùng kill app hoặc khởi động lại máy, coroutine bị hủy và vòng lặp biến mất. Ngược lại, WorkManager lưu trữ công việc bền vững và có thể sống sót qua việc kill app và khởi động lại thiết bị.
+    Pin & tài nguyên hệ thống: Một vòng lặp vô hạn tự chạy liên tục dễ đốt pin, tốn CPU/mạng không kiểm soát khi app không dùng tới. WorkManager được Android điều phối và tôn trọng chế độ tiết kiệm pin cũng như các ràng buộc hệ thống (như có mạng, sạc pin...), rất phù hợp cho tác vụ nền định kỳ hoặc chạy ngay cả khi app đã đóng.
+
+5. App bị kill thì PeriodicWork còn chạy không? Máy khởi động lại thì sao?
+   Cả hai trường hợp đều CÒN CHẠY (khi điều kiện ràng buộc của công việc được đáp ứng):
+   Khi app bị kill (bị đóng / bị hệ thống giết tiến trình): WorkManager lưu thông tin công việc bền vững vào hệ thống (database cục bộ của WorkManager) thay vì chỉ nằm trong bộ nhớ của tiến trình app. Do đó, khi app bị kill, PeriodicWork vẫn được giữ lại và tiếp tục chạy theo lịch khi tới thời điểm và thỏa mãn các ràng buộc (ví dụ có mạng).
+   Khi máy khởi động lại (reboot): WorkManager được thiết kế để sống sót qua cả việc khởi động lại thiết bị. Sau khi máy bật lên và các điều kiện ràng buộc phù hợp, hệ thống vẫn tiếp tục lập lịch và chạy PeriodicWork như bình thường.  
