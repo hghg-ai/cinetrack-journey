@@ -158,3 +158,19 @@ Phát state xuống & vẽ lại UI (State Down): SearchScreen thu thập uiStat
    Vì sao UI state nên dùng StateFlow:
    UI luôn cần biết "bây giờ màn hình đang ở trạng thái nào" để vẽ đúng ngay khi vừa mở màn hình hoặc vừa tái tạo sau xoay màn hình.
    Nhờ giữ giá trị mới nhất và lọc trùng lặp, collector mới gắn vào sẽ nhận ngay state hiện hành mà không phải gọi lại dữ liệu từ đầu hay recompose vô ích.
+4. Vì sao expose ra ngoài là StateFlow (bất biến) còn MutableStateFlow giữ private?
+   Đây là kỹ thuật Backing Property (private val _uiState = MutableStateFlow(...) và val uiState: StateFlow<...> = _uiState.asStateFlow()):
+   Giữ ViewModel làm nguồn sự thật duy nhất (Single Source of Truth): Ngăn các lớp bên ngoài (như Composable UI) tự gán _uiState.value = ... làm sai lệch state hoặc tạo ra nhiều nơi cùng sửa dữ liệu.
+ Đúng nguyên lý một chiều (UDF): UI chỉ đọc (StateFlow) để hiển thị và gửi event lên ViewModel khi có tương tác, giúp code dễ theo dõi và gỡ lỗi khi có bug.
+5. Debounce giải quyết vấn đề gì? Tiết kiệm chi phí API như thế nào?
+Vấn đề giải quyết: Khi người dùng gõ tìm kiếm liên tục từng ký tự trong thời gian ngắn, sự kiện thay đổi query bắn ra dồn dập. debounce(300) trì hoãn việc xử lý cho đến khi ngừng phát sự kiện mới đủ 300ms, giúp bỏ qua các từ khóa dở dang khi người dùng còn đang gõ.
+
+Tiết kiệm khi API tính tiền theo lượt gọi:
+
+Ví dụ người dùng gõ nhanh từ "batman" (6 ký tự, mỗi ký tự cách nhau < 300ms):
+
+Không có debounce: Có thể phát sinh tới 6 lượt gọi cho các chuỗi "b", "ba", "bat", "batm", "batma", "batman".
+
+Có debounce(300): Các chuỗi trung gian bị bỏ qua; chỉ khi ngừng gõ đủ 300ms ở "batman" mới gọi 1 lượt (tiết kiệm được 5 lượt trong tình huống đó).
+
+Nhờ vậy, ứng dụng giảm đáng kể số lượng request tính phí trên API, giảm tải cho server và tiết kiệm pin/dữ liệu mạng cho người dùng. 
