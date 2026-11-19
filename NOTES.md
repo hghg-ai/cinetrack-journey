@@ -122,3 +122,39 @@ Dự đoán hiện tượng:
   Nếu từ khóa và kết quả đã đưa vào ViewModel (như cách bạn đang làm với SearchViewModel và collectAsStateWithLifecycle()): xoay màn hình sẽ giữ nguyên cả từ khóa lẫn trạng thái/kết quả tìm kiếm.
 Dự đoán nguyên nhân:
   Xoay màn hình kích hoạt Configuration Change, khiến Activity bị hủy và tạo lại. Bộ nhớ của remember gắn với vòng đời Composition/Activity cũ nên bị xóa khi Activity hủy, trong khi ViewModel tồn tại xuyên suốt Configuration Change nên giữ được state.  
+
+Tuần 5
+1.
+[Người dùng gõ phím vào OutlinedTextField]
+       │
+       ▼ (1. Event lên: onQueryChanged(query))
+[SearchScreen (Stateless Composable)]
+       │
+       ▼ (2. Cập nhật _searchQuery / kích hoạt luồng xử lý)
+[SearchViewModel]
+       │  ├─ debounce(300ms) -> chờ ngừng gõ 300ms
+       │  ├─ distinctUntilChanged() -> bỏ qua nếu query không đổi
+       │  └─ flatMapLatest { repository.searchMovies(it) } -> hủy request cũ nếu có query mới
+       ▼
+[Repository / Data Layer] ──► trả danh sách phim (hoặc lỗi / rỗng)
+       │
+       ▼ (3. Cập nhật _uiState: Loading -> Success / Error / Empty)
+[SearchViewModel (StateFlow<SearchUiState>)]
+       │
+       ▼ (4. State xuống: collectAsStateWithLifecycle())
+[SearchScreen vẽ lại (Recompose) -> LazyColumn hiển thị danh sách]
+
+Các bước chi tiết:
+Phát sự kiện (Event Up): Người dùng gõ ký tự vào ô tìm kiếm; SearchScreen không tự giữ hay lọc dữ liệu mà gửi sự kiện (ví dụ onQueryChange(newText)) lên SearchViewModel.
+Xử lý luồng & chống nhiễu trong ViewModel: Query đi qua chuỗi toán tử (debounce(300), distinctUntilChanged(), flatMapLatest) để tránh gọi tìm kiếm thừa và hủy tác vụ cũ khi người dùng đang gõ tiếp.
+Lấy dữ liệu & đổi UiState: SearchViewModel đặt trạng thái đang tải (Loading), gọi Repository lấy danh sách phim, rồi cập nhật _uiState sang trạng thái tương ứng (Success(movies), danh sách rỗng hoặc Error).  
+Phát state xuống & vẽ lại UI (State Down): SearchScreen thu thập uiState qua collectAsStateWithLifecycle() và dùng when để render giao diện tương ứng (LazyColumn khi có kết quả).
+
+2. Vì sao ViewModel không bị hủy khi xoay màn hình còn Activity thì có?
+   Activity bị hủy và tạo lại: Xoay màn hình là một Configuration Change (thay đổi cấu hình thiết bị). Hệ thống Android phá hủy (destroy) instance Activity cũ và tạo (recreate) Activity mới để tải lại tài nguyên/layout phù hợp với hướng màn hình mới.
+   ViewModel được giữ lại: ViewModel không gắn trực tiếp vào vòng đời ngắn hạn của Activity mà được lưu trữ bên trong ViewModelStore (quản lý bởi ViewModelStoreOwner). Khi xoay màn hình, ViewModelStore tồn tại xuyên suốt quá trình cấu hình thay đổi; Activity mới sau khi tạo lại sẽ lấy lại đúng ViewModel cũ. ViewModel chỉ bị hủy và gọi onCleared() khi Activity kết thúc thực sự (như nhấn Back hoặc finish()).
+3. StateFlow khác Flow thường chỗ nào? Vì sao UI state nên dùng StateFlow?
+   Khác biệt chính:Flow thường (Cold Flow): Chỉ bắt đầu chạy code bên trong khi có collector lắng nghe; mỗi lần có người collect mới thường kích hoạt lại luồng riêng và không lưu giữ giá trị hiện tại.StateFlow (Hot State-Holder Flow): Luôn giữ một giá trị trạng thái hiện tại (value) (bắt buộc có giá trị khởi tạo), phát giá trị mới nhất cho nhiều collector, và tự bỏ qua nếu giá trị mới trùng (equals) với giá trị cũ.
+   Vì sao UI state nên dùng StateFlow:
+   UI luôn cần biết "bây giờ màn hình đang ở trạng thái nào" để vẽ đúng ngay khi vừa mở màn hình hoặc vừa tái tạo sau xoay màn hình.
+   Nhờ giữ giá trị mới nhất và lọc trùng lặp, collector mới gắn vào sẽ nhận ngay state hiện hành mà không phải gọi lại dữ liệu từ đầu hay recompose vô ích.
