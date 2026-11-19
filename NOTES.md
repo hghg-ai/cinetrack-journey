@@ -193,4 +193,61 @@ Tuần 6
 4. Vì sao ghép URL ảnh trong mapper chứ không phải trong composable?
    Giữ Composable sạch và chỉ lo hiển thị: UI chỉ cần nhận URL ảnh hoàn chỉnh đã sẵn sàng để tải/hiển thị, không phải biết quy tắc nối baseImageUrl + posterPath hay kích thước ảnh của API.
    Tránh lặp logic và dễ bảo trì: Nếu đổi domain/base URL ảnh hoặc đổi kích thước ảnh, bạn chỉ cần sửa ở một chỗ duy nhất trong mapper thay vì rà soát nhiều composable khác nhau.
+
+Tuần 8
+1. DI là gì? Giải thích bằng chính HomeViewModel trước và sau tuần này
+Khái niệm DI (Dependency Injection - Tiêm phụ thuộc): Là nguyên lý thiết kế giúp một class không tự khởi tạo các đối tượng phụ thuộc (dependencies) bên trong nó, mà nhận các đối tượng này từ bên ngoài truyền vào. Cách làm này giúp code tách rời lỏng lẻo (loose coupling), dễ bảo trì và dễ kiểm thử (test).
+
+Trước khi dùng DI:
+
+HomeViewModel phải tự tạo hoặc nhận repository qua constructor có giá trị mặc định thủ công (ví dụ HomeViewModel(private val repository: MovieRepository = FakeMovieRepository())).   
+
+Khi đổi từ FakeMovieRepository sang RemoteMovieRepository (hoặc thêm tham số như apiKey / apiService), bạn phải sửa ở nơi tạo ViewModel hoặc gán mặc định thủ công.
+
+Sau khi dùng DI:
+
+HomeViewModel chỉ khai báo những dependency nó cần qua constructor (ví dụ class HomeViewModel(private val repository: MovieRepository) : ViewModel()).
+
+Container DI (như Koin hoặc Hilt) sẽ tự tạo và tiêm MovieRepository vào cho HomeViewModel, đồng thời ở màn hình Compose có thể lấy HomeViewModel thông qua DI (koinViewModel() hoặc Hilt) mà không tự khởi tạo repo bằng tay.   
+
+2. @Provides khác @Binds? Khi nào dùng cái nào?
+@Binds:
+
+Dùng trên một hàm abstract bên trong một abstract class của module DI (như Hilt @Module).   
+
+Dùng để ánh xạ một interface sang một class implementation cụ thể khi implementation đó đã được DI biết cách tạo (ví dụ có @Inject constructor).   
+
+Kiểu trả về của hàm là interface, còn tham số duy nhất là class implementation.   
+
+
+@Provides:
+
+Dùng trên hàm có thân code bên trong object hoặc class của module.   
+
+Dùng khi bạn phải tự viết logic khởi tạo đối tượng, đặc biệt với các class từ thư viện bên ngoài không gắn @Inject constructor được (như Retrofit, OkHttpClient, RoomDatabase) hoặc cần cấu hình builder.   
+
+Khi nào dùng cái nào:
+
+Dùng @Binds khi bind Interface -> Implementation cho các lớp trong dự án mà DI đã tạo được instance.   
+
+Dùng @Provides khi cần tự tay build() / khởi tạo đối tượng (nhất là thư viện thứ 3 hoặc cấu hình tùy biến).   
+
+3. @Singleton nghĩa là gì? Nếu Database không phải singleton thì chuyện gì xảy ra?
+@Singleton nghĩa là chỉ tạo và dùng một instance duy nhất trong phạm vi tương ứng (ví dụ toàn ứng dụng / singleton scope) thay vì tạo mới mỗi lần được yêu cầu.   
+
+Nếu Database không phải singleton thì chuyện gì xảy ra:
+
+Mỗi lần tạo RoomDatabase là một thao tác khá nặng/tốn tài nguyên, việc sinh ra nhiều instance không cần thiết gây lãng phí bộ nhớ và tài nguyên.   
+
+Có thể phát sinh xung đột/mất đồng bộ trạng thái giữa nhiều instance mở cùng lúc trên cơ sở dữ liệu (nhất là khi có tình huống truy cập đồng thời hoặc multi-process, nếu không quản lý đúng sẽ dễ gặp race condition hoặc trạng thái không nhất quán).   
+
+4. cachedIn(viewModelScope) để làm gì? Bỏ đi thì xoay màn hình bị sao?
+cachedIn(viewModelScope) để lưu trữ (cache) luồng PagingData trong phạm vi viewModelScope để giữ dữ liệu phân trang khi có thay đổi cấu hình hoặc khi collector mới đăng ký lắng nghe, tránh việc phải tải lại từ đầu một cách không cần thiết.
+
+Bỏ đi thì xoay màn hình bị sao: Khi xoay màn hình (Configuration Change), Activity bị hủy và tạo lại. Nếu không có cachedIn(viewModelScope), luồng PagingData không được giữ cache sẵn trong scope của ViewModel mà có thể bị kích hoạt tải lại từ đầu / mất trạng thái phân trang đã tải trước đó khi UI kết nối lại sau xoay màn hình.   
+
+5. Trong PagingSource, nextKey = null mang ý nghĩa gì?
+Trong LoadResult.Page(data = ..., prevKey = ..., nextKey = ...), nextKey là key dùng cho lần gọi load() tiếp theo để lấy các trang dữ liệu phía sau trang hiện tại.   
+
+Khi nextKey = null, điều đó báo cho Paging biết là không còn trang dữ liệu nào phía sau nữa (đã chạm tới cuối danh sách/hết dữ liệu để phân trang), nên Paging sẽ không tiếp tục gọi load() để tải thêm trang sau nữa.
    Đảm bảo dữ liệu đầu vào đồng nhất: Model domain/UI nhận được giá trị chuẩn ngay từ tầng chuyển đổi dữ liệu, giúp tái sử dụng model ở nhiều màn hình hoặc test dễ dàng hơn.
