@@ -173,4 +173,24 @@ Không có debounce: Có thể phát sinh tới 6 lượt gọi cho các chuỗi
 
 Có debounce(300): Các chuỗi trung gian bị bỏ qua; chỉ khi ngừng gõ đủ 300ms ở "batman" mới gọi 1 lượt (tiết kiệm được 5 lượt trong tình huống đó).
 
-Nhờ vậy, ứng dụng giảm đáng kể số lượng request tính phí trên API, giảm tải cho server và tiết kiệm pin/dữ liệu mạng cho người dùng. 
+Nhờ vậy, ứng dụng giảm đáng kể số lượng request tính phí trên API, giảm tải cho server và tiết kiệm pin/dữ liệu mạng cho người dùng.
+
+Tuần 6
+1. GET khác POST chỗ nào? Status 200, 401, 404, 500 nghĩa là gì? Key sai thì TMDB trả mã nào?
+   GET vs POST:
+   GET: Dùng để lấy/đọc dữ liệu từ server. Tham số thường truyền qua URL/query string và không có request body.
+   POST: Dùng để gửi/tạo dữ liệu mới lên server (hoặc gửi dữ liệu xử lý như form/payload), thường mang dữ liệu trong request body.
+   Ý nghĩa các HTTP Status Code:
+   200 OK: Yêu cầu thành công, server đã xử lý và trả về dữ liệu phản hồi.
+   401 Unauthorized: Chưa xác thực hoặc thông tin xác thực không hợp lệ (ví dụ thiếu/sai API key hoặc token).
+   404 Not Found: Không tìm thấy tài nguyên/endpoint được yêu cầu trên server (ví dụ sai URL, sai ID phim, hoặc tài nguyên không tồn tại).
+   500 Internal Server Error: Lỗi không mong muốn xảy ra ở phía server khi xử lý yêu cầu.
+   Key sai thì TMDB trả mã nào: TMDB trả về 401 (401 Unauthorized).
+2. Vì sao đổi Fake sang Remote mà UI và ViewModel hầu như không phải sửa?
+   UI và ViewModel chỉ làm việc với interface của Repository và các model domain/UI chứ không phụ thuộc trực tiếp vào cách lấy dữ liệu bên dưới. Khi chuyển từ Fake sang Remote, ta chỉ cần cung cấp implementation dùng Retrofit/API (và map DTO sang domain model) thông qua tầng Data/DI. Nhờ vậy, hợp đồng dữ liệu trả về cho ViewModel và luồng state lên UI giữ nguyên, nên UI và ViewModel gần như không cần sửa.
+3. Interceptor là gì? Ngoài logging còn dùng làm gì?
+   Interceptor là thành phần nằm trên đường đi của request/response trong client mạng (như OkHttp) cho phép can thiệp, quan sát, chỉnh sửa hoặc chặn request trước khi gửi đi và response trước khi trả về.Ngoài logging còn dùng để làm gì:Tự động gắn api_key hoặc Authorization header cho mọi request ở một chỗ duy nhất thay vì lặp lại ở từng API call.Xử lý chung cho lỗi xác thực/token (ví dụ bắt 401 để refresh token hoặc điều hướng đăng nhập lại).Tùy chỉnh header/cache/timeout (ví dụ thêm Accept, User-Agent, hoặc ép chính sách cache cho từng loại request).
+4. Vì sao ghép URL ảnh trong mapper chứ không phải trong composable?
+   Giữ Composable sạch và chỉ lo hiển thị: UI chỉ cần nhận URL ảnh hoàn chỉnh đã sẵn sàng để tải/hiển thị, không phải biết quy tắc nối baseImageUrl + posterPath hay kích thước ảnh của API.
+   Tránh lặp logic và dễ bảo trì: Nếu đổi domain/base URL ảnh hoặc đổi kích thước ảnh, bạn chỉ cần sửa ở một chỗ duy nhất trong mapper thay vì rà soát nhiều composable khác nhau.
+   Đảm bảo dữ liệu đầu vào đồng nhất: Model domain/UI nhận được giá trị chuẩn ngay từ tầng chuyển đổi dữ liệu, giúp tái sử dụng model ở nhiều màn hình hoặc test dễ dàng hơn.
