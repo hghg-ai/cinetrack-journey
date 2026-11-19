@@ -274,6 +274,6 @@ Tuần 9
     Pin & tài nguyên hệ thống: Một vòng lặp vô hạn tự chạy liên tục dễ đốt pin, tốn CPU/mạng không kiểm soát khi app không dùng tới. WorkManager được Android điều phối và tôn trọng chế độ tiết kiệm pin cũng như các ràng buộc hệ thống (như có mạng, sạc pin...), rất phù hợp cho tác vụ nền định kỳ hoặc chạy ngay cả khi app đã đóng.
 
 5. App bị kill thì PeriodicWork còn chạy không? Máy khởi động lại thì sao?
-   Cả hai trường hợp đều CÒN CHẠY (khi điều kiện ràng buộc của công việc được đáp ứng):
+   Cả hai trường hợp đều còn chạy (khi điều kiện ràng buộc của công việc được đáp ứng):
    Khi app bị kill (bị đóng / bị hệ thống giết tiến trình): WorkManager lưu thông tin công việc bền vững vào hệ thống (database cục bộ của WorkManager) thay vì chỉ nằm trong bộ nhớ của tiến trình app. Do đó, khi app bị kill, PeriodicWork vẫn được giữ lại và tiếp tục chạy theo lịch khi tới thời điểm và thỏa mãn các ràng buộc (ví dụ có mạng).
    Khi máy khởi động lại (reboot): WorkManager được thiết kế để sống sót qua cả việc khởi động lại thiết bị. Sau khi máy bật lên và các điều kiện ràng buộc phù hợp, hệ thống vẫn tiếp tục lập lịch và chạy PeriodicWork như bình thường.  
