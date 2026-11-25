@@ -1,6 +1,7 @@
 package com.binh.cinetrack.fakes
 
 import androidx.paging.PagingData
+import com.binh.cinetrack.domain.Cast
 import com.binh.cinetrack.domain.Genre
 import com.binh.cinetrack.domain.Movie
 import com.binh.cinetrack.domain.MovieRepository
@@ -15,6 +16,12 @@ class FakeMovieRepository : MovieRepository {
         Movie(id = 1, title = "Fake Movie 1", overview = "", posterPath = "",
          backdropPath = "", rating = 8.0, releaseDate = "2024", genreIds = emptyList(),
             popularity = 10.0)
+    )
+    var creditsToReturn = emptyList<Cast>()
+    var similarMoviesToReturn = listOf(
+        Movie(id = 2, title = "Fake Similar Movie", overview = "", posterPath = "",
+         backdropPath = "", rating = 7.5, releaseDate = "2024", genreIds = emptyList(),
+            popularity = 8.0)
     )
     // Cờ ra lệnh "lần tới ném lỗi"
     var shouldThrowError = false
@@ -57,4 +64,9 @@ class FakeMovieRepository : MovieRepository {
     override suspend fun getPopular(page: Int): List<Movie> = moviesToReturn
     override suspend fun getMovieDetail(id: Int): Movie? = moviesToReturn.find { it.id == id }
     override suspend fun getGenres(): List<Genre> = emptyList()
+
+    override suspend fun getMovieCredits(id: Int): List<Cast> = creditsToReturn
+    override suspend fun getSimilarMovies(id: Int): List<Movie> = similarMoviesToReturn
+    override fun getMoviesByGenrePaged(genreId: Int): Flow<PagingData<Movie>> =
+        flowOf(PagingData.from(moviesToReturn))
 }

@@ -1,6 +1,5 @@
 package com.binh.cinetrack.ui.theme
 
-import android.os.Message
 import com.binh.cinetrack.domain.Movie
 
 sealed interface SearchUiState{

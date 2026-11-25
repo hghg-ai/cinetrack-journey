@@ -18,6 +18,11 @@ import kotlinx.coroutines.launch
 import java.io.IOException
 import javax.inject.Inject
 
+/**
+ * ViewModel quản lý logic tìm kiếm phim.
+ * Áp dụng kỹ thuật Debounce 300ms giúp hoãn gọi API khi người dùng đang gõ phím liên tục,
+ * giúp tiết kiệm băng thông và tài nguyên hệ thống.
+ */
 @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class SearchViewModel @Inject constructor(
@@ -33,8 +38,8 @@ class SearchViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             _searchQuery
-                .debounce(300L)
-                .distinctUntilChanged()
+                .debounce(300L) // Chờ 300ms sau khi người dùng dừng gõ mới phát sự kiện
+                .distinctUntilChanged() // Bỏ qua nếu từ khóa giống hệt từ khóa cũ
                 .flatMapLatest { query ->
                     flow {
                         if (query.isBlank()) {
@@ -50,7 +55,7 @@ class SearchViewModel @Inject constructor(
                                     emit(SearchUiState.Success(results))
                                 }
                             } catch (e: IOException) {
-                                emit(SearchUiState.Error( "Không có kết nối mạng"))
+                                emit(SearchUiState.Error("Không có kết nối mạng"))
                             } catch (e: Exception) {
                                 emit(SearchUiState.Error("Đã có lỗi xảy ra"))
                             }
@@ -63,10 +68,12 @@ class SearchViewModel @Inject constructor(
         }
     }
 
+    // Cập nhật từ khóa tìm kiếm mới từ giao diện UI
     fun onQueryChange(newQuery: String) {
         _searchQuery.value = newQuery
     }
 
+    // Hàm thử lại tìm kiếm khi bị lỗi mạng
     fun retrySearch() {
         val currentQuery = _searchQuery.value
         if (currentQuery.isNotBlank()) {
@@ -80,7 +87,7 @@ class SearchViewModel @Inject constructor(
                         _uiState.value = SearchUiState.Success(results)
                     }
                 } catch (e: IOException) {
-                    _uiState.value = SearchUiState.Error( "Không có kết nối mạng")
+                    _uiState.value = SearchUiState.Error("Không có kết nối mạng")
                 } catch (e: Exception) {
                     _uiState.value = SearchUiState.Error("Đã có lỗi xảy ra")
                 }

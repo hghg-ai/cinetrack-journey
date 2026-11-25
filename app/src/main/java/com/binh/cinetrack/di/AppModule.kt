@@ -19,11 +19,15 @@ import retrofit2.Retrofit
 import retrofit2.converter.kotlinx.serialization.asConverterFactory
 import javax.inject.Singleton
 
+/**
+ * Hilt Dependency Injection Module cấp SingletonComponent.
+ * Cung cấp các thể hiện dùng chung toàn app như Retrofit, OkHttpClient, Room Database, DAOs và DataStore.
+ */
 @Module
 @InstallIn(SingletonComponent::class)
 object AppModule {
 
-    // Dựng Retrofit.Builder() trực tiếp trong AppModule chuẩn theo Hilt DI
+    // Cung cấp TmdbApiService (Retrofit REST Client)
     @Provides
     @Singleton
     fun provideTmdbApi(): TmdbApiService {
@@ -48,18 +52,22 @@ object AppModule {
             .create(TmdbApiService::class.java)
     }
 
+    // Cung cấp Room AppDatabase
     @Provides
     @Singleton
     fun provideDatabase(@ApplicationContext context: Context): AppDatabase {
         return AppDatabase.getInstance(context)
     }
 
+    // Cung cấp FavoriteDao
     @Provides
     fun provideFavoriteDao(db: AppDatabase): FavoriteDao = db.favoriteDao()
 
+    // Cung cấp MovieCacheDao
     @Provides
     fun provideMovieCacheDao(db: AppDatabase): MovieCacheDao = db.movieCacheDao()
 
+    // Cung cấp ThemePreferences (DataStore)
     @Provides
     @Singleton
     fun provideThemePreferences(@ApplicationContext context: Context): ThemePreferences {

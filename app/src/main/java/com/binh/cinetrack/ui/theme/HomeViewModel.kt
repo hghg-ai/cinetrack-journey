@@ -17,11 +17,16 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+/**
+ * ViewModel quản lý logic dữ liệu màn hình Trang chủ (HomeScreen).
+ * Xử lý chế độ xem Offline SSOT, trạng thái nạp mạng và giữ nguyên vị trí cuộn khi Refresh.
+ */
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val respository: MovieRepository
 ) : ViewModel() {
 
+    // Luồng dữ liệu danh sách phim Popular phân trang bằng Paging 3
     val popularMovies: Flow<PagingData<Movie>> = respository
         .getPopularPaged()
         .cachedIn(viewModelScope)
@@ -29,6 +34,7 @@ class HomeViewModel @Inject constructor(
     private val _uiState = MutableStateFlow<HomeUiState>(HomeUiState.Loading)
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
+    // Cờ báo trạng thái đang nạp lại mạng (dùng xoay Icon Refresh 🔄 trên BottomBar)
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
 
@@ -42,11 +48,16 @@ class HomeViewModel @Inject constructor(
 
     fun loadAndRefresh() {
         viewModelScope.launch {
-            if(_uiState.value !is HomeUiState.Success) {
+            
+            // 🟢 KỸ THUẬT GIỮ NGUYÊN VỊ TRÍ CUỘN KHI REFRESH:
+            // Chỉ chuyển trạng thái màn hình về Loading nếu chưa có dữ liệu (khi mở app lần đầu).
+            // Khi ứng dụng đã có dữ liệu (HomeUiState.Success), KHÔNG chuyển về Loading nữa
+            // để tránh hủy bỏ LazyVerticalGrid khỏi cây giao diện, nhờ đó vị trí cuộn của người dùng được giữ nguyên 100%!
+            if (_uiState.value !is HomeUiState.Success) {
                 _uiState.value = HomeUiState.Loading
             }
 
-            // 1. Luồng A: Độc lập lắng nghe dữ liệu từ Room Database
+            // 1. Luồng A: Độc lập lắng nghe dữ liệu từ Room Database Cache (Offline SSOT)
             launch {
                 respository.getTrendingMovies()
                     .catch { e ->
@@ -99,7 +110,7 @@ class HomeViewModel @Inject constructor(
                     } else {
                         _uiState.value = HomeUiState.Error(e.message ?: "Không có kết nối mạng")
                     }
-                }finally {
+                } finally {
                     _isRefreshing.value = false
                 }
             }

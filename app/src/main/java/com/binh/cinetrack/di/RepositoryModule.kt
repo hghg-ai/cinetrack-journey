@@ -8,10 +8,14 @@ import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
+/**
+ * Hilt Module ràng buộc (Binds) Interface `MovieRepository` với lớp triển khai `RemoteMovieRepository`.
+ */
 @Module
 @InstallIn(SingletonComponent::class)
-abstract class RepositoryModule{
+abstract class RepositoryModule {
+
     @Binds
     @Singleton
-    abstract fun bindMovieRepository(impl: RemoteMovieRepository) : MovieRepository
+    abstract fun bindMovieRepository(impl: RemoteMovieRepository): MovieRepository
 }

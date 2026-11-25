@@ -28,12 +28,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.binh.cinetrack.CinetrackApplication
-import com.binh.cinetrack.data.RemoteMovieRepository
 import com.binh.cinetrack.domain.Movie
 
 @OptIn(ExperimentalMaterial3Api::class)

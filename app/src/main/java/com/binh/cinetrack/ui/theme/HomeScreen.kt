@@ -263,6 +263,8 @@ fun HomeScreen(
 
 
                         // Grid 2 cột: Popular Movies
+                        // 🟢 GIỮ NGUYÊN VỊ TRÍ CUỘN PAGING 3: Dùng itemKey chuẩn dựa vào ID độc nhất của phim (movie.id)
+                        // thay vì dùng chỉ số index. Giúp Paging 3 duy trì chính xác vị trí cuộn khi làm mới danh sách.
                         items(
                             count = popularMovies.itemCount,
                             key = popularMovies.itemKey { movie -> movie.id }

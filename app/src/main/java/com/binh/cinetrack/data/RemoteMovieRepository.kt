@@ -21,6 +21,12 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
+/**
+ * Lớp triển khai (Implementation) của MovieRepository interface.
+ * Quản lý luồng dữ liệu theo kiến trúc Single Source of Truth (SSOT):
+ * - Đọc dữ liệu Offline trước từ Room Database.
+ * - Gọi Retrofit API lấy dữ liệu mới và cập nhật lại vào Room Database.
+ */
 class RemoteMovieRepository @Inject constructor(
     private val favoriteDao: FavoriteDao,
     private val movieCacheDao: MovieCacheDao,
@@ -29,7 +35,7 @@ class RemoteMovieRepository @Inject constructor(
 
     private val apiKey: String = BuildConfig.TMDB_API_KEY
 
-    // Phân trang Popular Paging 3
+    // Phân trang Popular Movies bằng Paging 3
     override fun getPopularPaged(): Flow<PagingData<Movie>> {
         return Pager(
             config = PagingConfig(
@@ -108,19 +114,20 @@ class RemoteMovieRepository @Inject constructor(
             favoriteDao.insert(movie.toEntity())
         }
     }
-    override suspend fun getMovieCredits(id: Int): List<Cast>{
-        return try{
+
+    override suspend fun getMovieCredits(id: Int): List<Cast> {
+        return try {
             val response = apiService.getMovieCredits(id, apiKey)
             response.cast.map { it.toCast() }
-        } catch (e: Exception){
+        } catch (e: Exception) {
             emptyList()
         }
     }
 
     override suspend fun getSimilarMovies(id: Int): List<Movie> {
-        return try{
+        return try {
             val response = apiService.getSimilarMovies(id, apiKey)
-            response.results.map{it.toMovie()}
+            response.results.map { it.toMovie() }
         } catch (e: Exception) {
             emptyList()
         }
@@ -129,7 +136,7 @@ class RemoteMovieRepository @Inject constructor(
     override fun getMoviesByGenrePaged(genreId: Int): Flow<PagingData<Movie>> {
         return Pager(
             config = PagingConfig(pageSize = 20, enablePlaceholders = false)
-        ){
+        ) {
             GenreMoviesPagingSource(apiService, apiKey, genreId)
         }.flow
     }
