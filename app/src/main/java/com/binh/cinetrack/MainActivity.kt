@@ -12,7 +12,6 @@ import com.binh.cinetrack.data.preferences.AppTheme
 import com.binh.cinetrack.data.preferences.ThemePreferences
 import com.binh.cinetrack.ui.theme.CineTrackTheme
 import com.binh.cinetrack.ui.theme.CinetrackApp
-import com.binh.cinetrack.ui.theme.HomeScreen
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint

@@ -1,6 +1,5 @@
 package com.binh.cinetrack.ui.theme
 
-import androidx.compose.ui.graphics.Canvas
 import com.binh.cinetrack.domain.Cast
 import com.binh.cinetrack.domain.Genre
 import com.binh.cinetrack.domain.Movie

@@ -20,36 +20,46 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.flow.firstOrNull
 
+/**
+ * Tác vụ chạy ngầm định kỳ bằng WorkManager tích hợp Hilt (@HiltWorker).
+ * Tự động nạp phim Hot nhất hằng ngày và gửi Thông báo tới điện thoại người dùng.
+ * Bấm vào thông báo sẽ kích hoạt Deep Link (`cinetrack://detail/{id}`) mở trực tiếp màn chi tiết phim.
+ */
 @HiltWorker
 class DailyTrendingWorker @AssistedInject constructor(
     @Assisted private val context: Context,
     @Assisted workParams: WorkerParameters,
     private val repository: MovieRepository
 ) : CoroutineWorker(context, workParams) {
-    companion object{
+
+    companion object {
         const val CHANNEL_ID = "daily_trending_channel"
         const val CHANNEL_NAME = "Phim đề xuất"
         const val NOTIFICATION_ID = 1001
     }
-    override suspend fun doWork(): Result{
+
+    override suspend fun doWork(): Result {
         return try {
             val movies = repository.getTrendingMovies().firstOrNull() ?: repository.getMovies()
             if (movies.isEmpty()) return Result.success()
 
             val sortedMovies = movies.top5ByRating()
             val topMovie = sortedMovies.first()
-            val topTitles =  movies.top5ByRating().take(1).joinToString(", "){it.title}
+            val topTitles = sortedMovies.take(1).joinToString(", ") { it.title }
+            
             showNotification(topTitles, topMovie)
             Result.success()
-        }catch (e: Exception){
+        } catch (e: Exception) {
             Result.retry()
         }
     }
+
     private fun showNotification(movieTitles: String, topMovie: Movie) {
         val notificationManager =
             context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
         // Tạo Notification Channel (Yêu cầu bắt buộc từ Android 8.0 / API 26+)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 CHANNEL_ID, CHANNEL_NAME,
                 NotificationManager.IMPORTANCE_HIGH
@@ -59,26 +69,28 @@ class DailyTrendingWorker @AssistedInject constructor(
             notificationManager.createNotificationChannel(channel)
         }
 
-        // Tạo PendingIntent để khi bấm vào Notification sẽ mở MainActivity
+        // Tạo PendingIntent chứa Deep Link URI để khi bấm vào thông báo sẽ mở thẳng DetailScreen
         val deepLinkUri = "cinetrack://detail/${topMovie.id}".toUri()
-        val intent = Intent(Intent.ACTION_VIEW,deepLinkUri,context,
-            MainActivity::class.java)
+        val intent = Intent(Intent.ACTION_VIEW, deepLinkUri, context, MainActivity::class.java)
+        
         val pendingIntent = PendingIntent.getActivity(
             context,
             topMovie.id,
             intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
-        // Xây dựng giao diện Notìication
+
+        // Xây dựng giao diện Notification
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.mipmap.ic_launcher)
-            .setContentTitle("Hôm nay xem gì")
+            .setContentTitle("Hôm nay xem gì 🔥")
             .setContentText(movieTitles)
             .setStyle(NotificationCompat.BigTextStyle().bigText("Hôm nay có gì hot: $movieTitles"))
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)
             .build()
+            
         notificationManager.notify(NOTIFICATION_ID, notification)
     }
 }
